@@ -4,7 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Undangan Perkahwinan Fahim &amp; Aunibilla</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=Amiri:wght@400;700&family=Tangerine:wght@400;700&family=Great+Vibes&family=Alex+Brush&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=Amiri:wght@400;700&family=Tangerine:wght@400;700&family=Great+Vibes&family=Alex+Brush&family=Scheherazade+New:wght@400;700&family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <style>
         :root {
@@ -178,6 +178,66 @@
         }
         #music-fab.playing .fab-ring { opacity:1; animation:spin-ring 2.5s linear infinite; }
         #music-fab.playing { box-shadow:0 4px 24px rgba(0,0,0,.35),0 0 16px rgba(201,168,76,.25); }
+
+        .font-caveat { font-family: 'Caveat', cursive; }
+
+        /* ── Wish modal (slides up / slides down) ── */
+        #wish-overlay {
+            position: fixed; inset: 0; z-index: 20000;
+            background: rgba(10,16,35,0.7);
+            backdrop-filter: blur(4px);
+            display: flex; align-items: flex-end; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.35s ease;
+        }
+        #wish-overlay.open { opacity: 1; pointer-events: all; }
+        #wish-sheet {
+            width: 100%; max-width: 520px;
+            background: var(--ivory);
+            border-radius: 20px 20px 0 0;
+            padding: 28px 24px 36px;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(.32,.72,0,1);
+        }
+        #wish-overlay.open #wish-sheet { transform: translateY(0); }
+
+        #wish-sheet input,
+        #wish-sheet textarea {
+            width: 100%; border: 1px solid rgba(201,168,76,0.4);
+            border-radius: 10px; padding: 12px 14px;
+            font-family: 'Poppins', sans-serif; font-size: 14px;
+            background: #fff; color: var(--navy);
+            outline: none; resize: none;
+            transition: border-color 0.2s;
+        }
+        #wish-sheet input:focus,
+        #wish-sheet textarea:focus { border-color: var(--gold); }
+
+        /* ── Toast ── */
+        #wish-toast {
+            position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: var(--navy); color: var(--gold);
+            border: 1px solid rgba(201,168,76,0.4);
+            padding: 10px 22px; border-radius: 999px;
+            font-size: 13px; letter-spacing: 0.05em;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 30000;
+        }
+        #wish-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── Wish ticker ── */
+        #wish-ticker {
+            min-height: 80px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .wish-card {
+            text-align: center;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .wish-card.hidden { opacity: 0; transform: translateY(8px); pointer-events:none; position:absolute; }
+        .wish-card.visible { opacity: 1; transform: translateY(0); }
     </style>
 </head>
 <body class="w-full" style="background:rgb(253,248,240);">
@@ -310,7 +370,7 @@
           </div>
         </div>
         <div class="gold-divider w-32 mx-auto my-8"></div>
-        <p style="color:rgb(253,248,240);font-size:30px;">11:00 pagi – 4:00 petang</p>
+        <p style="color:rgb(253,248,240);font-size:18px;letter-spacing:0.05em;">11:00 pagi – 4:00 petang</p>
       </div>
     </section>
 
@@ -375,11 +435,59 @@
       </div>
     </section>
 
+    <!-- Wishes -->
+    <section class="scroll-fade py-16 px-6 text-center relative overflow-hidden" style="background-color:var(--navy);">
+      <div class="absolute top-6 left-6   w-12 h-12 border-t-2 border-l-2 opacity-20" style="border-color:var(--gold);"></div>
+      <div class="absolute top-6 right-6  w-12 h-12 border-t-2 border-r-2 opacity-20" style="border-color:var(--gold);"></div>
+      <div class="absolute bottom-6 left-6  w-12 h-12 border-b-2 border-l-2 opacity-20" style="border-color:var(--gold);"></div>
+      <div class="absolute bottom-6 right-6 w-12 h-12 border-b-2 border-r-2 opacity-20" style="border-color:var(--gold);"></div>
+      <div class="max-w-lg mx-auto relative z-10">
+        <p class="text-sm uppercase tracking-[0.3em] mb-3" style="color:var(--gold);font-size:14px;">Ucapan &amp; Doa</p>
+        <p class="mb-8" style="color:rgba(253,248,240,0.7);font-size:14px;">Titipkan ucapan dan doa kalian untuk kami</p>
+
+        <!-- Wish ticker -->
+        <div id="wish-ticker" class="relative mb-8 px-4">
+          <p id="no-wishes-msg" class="font-caveat" style="color:rgba(253,248,240,0.4);font-size:20px;">Belum ada ucapan lagi. Jadilah yang pertama! 🌸</p>
+        </div>
+
+        <div class="gold-divider w-24 mx-auto mb-8"></div>
+
+        <!-- Wish Here button -->
+        <button onclick="openWishModal()"
+          class="px-10 py-3 rounded-full text-sm uppercase tracking-[0.2em] font-semibold transition hover:scale-105 pulse-glow"
+          style="background:transparent;border:1.5px solid var(--gold);color:var(--gold);">
+          ✦ Wish Here! ✦
+        </button>
+      </div>
+    </section>
+
     <!-- Footer -->
     <footer class="scroll-fade py-10 px-6 text-center" style="background-color:var(--navy);">
       <p style="color:rgb(201,168,76);opacity:.6;font-size:14px;">Fahim &amp; Aunibilla — 30.01.2027</p>
     </footer>
   </div>
+
+  <!-- ═══ Wish Modal (bottom sheet) ═══ -->
+  <div id="wish-overlay" onclick="handleOverlayClick(event)">
+    <div id="wish-sheet">
+      <!-- drag handle -->
+      <div class="w-10 h-1 rounded-full mx-auto mb-5" style="background:rgba(15,27,61,0.2);"></div>
+      <p class="text-center font-semibold mb-5" style="color:var(--navy);font-size:16px;letter-spacing:0.05em;">Ucapan untuk Fahim &amp; Auni 💛</p>
+      <div class="space-y-3">
+        <input id="wish-name" type="text" placeholder="Nama anda..." maxlength="60">
+        <textarea id="wish-text" rows="3" placeholder="Tulis ucapan di sini..." maxlength="200"></textarea>
+      </div>
+      <button onclick="submitWish()"
+        class="w-full mt-4 py-3 rounded-xl font-semibold text-sm uppercase tracking-widest transition hover:opacity-90"
+        style="background:var(--navy);color:var(--gold);border:1px solid rgba(201,168,76,0.4);">
+        Hantar Ucapan
+      </button>
+      <button onclick="closeWishModal()" class="w-full mt-2 py-2 text-xs uppercase tracking-wider opacity-40 hover:opacity-70 transition" style="color:var(--navy);">Batal</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="wish-toast">✦ Ucapan dihantar! Terima kasih 🌸</div>
 
   <!-- Audio -->
   <audio id="bg-music" loop preload="auto">
@@ -585,6 +693,85 @@
         if(!didMove) toggleMusic();
       });
     })();
+
+
+    /* ── Wishes ── */
+    let wishes = [];
+    let tickerIndex = 0;
+    let tickerTimer = null;
+
+    function openWishModal() {
+      document.getElementById('wish-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeWishModal() {
+      document.getElementById('wish-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    function handleOverlayClick(e) {
+      if (e.target === document.getElementById('wish-overlay')) closeWishModal();
+    }
+
+    function submitWish() {
+      const name = document.getElementById('wish-name').value.trim();
+      const text = document.getElementById('wish-text').value.trim();
+      if (!name || !text) {
+        const missing = !name ? document.getElementById('wish-name') : document.getElementById('wish-text');
+        missing.style.borderColor = '#e57373';
+        setTimeout(() => missing.style.borderColor = '', 1200);
+        return;
+      }
+      wishes.push({ name, text });
+      document.getElementById('wish-name').value = '';
+      document.getElementById('wish-text').value = '';
+      closeWishModal();
+      showToast();
+      renderTicker();
+    }
+
+    function showToast() {
+      const t = document.getElementById('wish-toast');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    function renderTicker() {
+      const ticker = document.getElementById('wish-ticker');
+      const noMsg  = document.getElementById('no-wishes-msg');
+
+      if (wishes.length === 0) {
+        if (noMsg) noMsg.style.display = '';
+        clearInterval(tickerTimer);
+        return;
+      }
+      if (noMsg) noMsg.style.display = 'none';
+
+      // clear existing cards
+      ticker.querySelectorAll('.wish-card').forEach(c => c.remove());
+
+      // build a card for each wish (only one visible at a time)
+      wishes.forEach((w, i) => {
+        const card = document.createElement('div');
+        card.className = 'wish-card' + (i === tickerIndex ? ' visible' : ' hidden');
+        card.innerHTML = `
+          <p class="font-caveat" style="color:var(--ivory);font-size:24px;line-height:1.4;">"${w.text}"</p>
+          <p class="mt-2 font-caveat" style="color:var(--gold);font-size:18px;">— ${w.name}</p>
+        `;
+        ticker.appendChild(card);
+      });
+
+      clearInterval(tickerTimer);
+      if (wishes.length > 1) {
+        tickerTimer = setInterval(() => {
+          const cards = ticker.querySelectorAll('.wish-card');
+          cards[tickerIndex].classList.remove('visible');
+          cards[tickerIndex].classList.add('hidden');
+          tickerIndex = (tickerIndex + 1) % wishes.length;
+          cards[tickerIndex].classList.remove('hidden');
+          cards[tickerIndex].classList.add('visible');
+        }, 3000);
+      }
+    }
 
     /* ── Scroll observer ── */
     const observer = new IntersectionObserver(entries=>{
