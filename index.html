@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="ms"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Undangan Perkahwinan Fahim &amp; Aunibilla</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=Amiri:wght@400;700&family=Tangerine:wght@400;700&family=Great+Vibes&family=Alex+Brush&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <style>
+        :root {
+            --navy: #0f1b3d;
+            --gold: #c9a84c;
+            --ivory: #fdf8f0;
+            --cream: #f5efe3;
+        }
+        body { font-family: 'Poppins', sans-serif; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        .font-arabic { font-family: 'Scheherazade New', serif; }
+        .font-script { font-family: 'Great Vibes', cursive; }
+        .font-callig { font-family: 'Tangerine', cursive; }
+        .font-alex-brush { font-family: 'Alex Brush', cursive; }
+
+        .pattern-bg {
+            background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0L80 40L40 80L0 40Z' fill='none' stroke='%23c9a84c' stroke-width='0.5' opacity='0.15'/%3E%3Cpath d='M40 10L70 40L40 70L10 40Z' fill='none' stroke='%23c9a84c' stroke-width='0.3' opacity='0.1'/%3E%3C/svg%3E");
+        }
+
+        .pattern-border {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='20' fill='none' stroke='%23c9a84c' stroke-width='0.4' opacity='0.2'/%3E%3Cpath d='M30 10L50 30L30 50L10 30Z' fill='none' stroke='%23c9a84c' stroke-width='0.3' opacity='0.15'/%3E%3C/svg%3E");
+        }
+
+        .cream-ornament {
+            background-image: 
+                url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 10L60 40L90 50L60 60L50 90L40 60L10 50L40 40Z' fill='none' stroke='%23c9a84c' stroke-width='0.5' opacity='0.12'/%3E%3C/svg%3E"),
+                url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='40' cy='40' r='30' fill='none' stroke='%23c9a84c' stroke-width='0.3' opacity='0.1'/%3E%3Ccircle cx='40' cy='40' r='20' fill='none' stroke='%23c9a84c' stroke-width='0.3' opacity='0.12'/%3E%3C/svg%3E");
+            background-position: 0 0, 40px 40px;
+            background-repeat: repeat;
+            animation: shimmer 4s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1.2; }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse-gold {
+            0%, 100% { box-shadow: 0 0 20px rgba(201,168,76,0.3); }
+            50% { box-shadow: 0 0 40px rgba(201,168,76,0.6); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes float-petal-1 {
+            0% { transform: translateX(-100px) translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateX(100px) translateY(300px) rotate(360deg); opacity: 0; }
+        }
+        @keyframes float-petal-2 {
+            0% { transform: translateX(50px) translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateX(-150px) translateY(350px) rotate(-360deg); opacity: 0; }
+        }
+        @keyframes float-petal-3 {
+            0% { transform: translateX(-50px) translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateX(120px) translateY(320px) rotate(360deg); opacity: 0; }
+        }
+        .animate-fade-in { animation: fadeInUp 0.8s ease forwards; }
+        .pulse-glow { animation: pulse-gold 2s infinite; }
+        .float-anim { animation: float 3s ease-in-out infinite; }
+
+        .scroll-fade {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .scroll-fade.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .gold-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        #invitation-content { display: none; }
+        #invitation-content.revealed { display: block; }
+
+        .timeline-dot {
+            width: 12px; height: 12px;
+            background: var(--gold);
+            border-radius: 50%;
+            border: 2px solid var(--ivory);
+        }
+
+        .petal {
+            position: fixed;
+            pointer-events: none;
+            font-size: 1.5rem;
+            z-index: 9999;
+        }
+        .petal-1 { animation: float-petal-1 6s linear forwards; }
+        .petal-2 { animation: float-petal-2 7s linear forwards; }
+        .petal-3 { animation: float-petal-3 8s linear forwards; }
+
+        /* Cover fills viewport */
+        #cover-screen {
+            min-height: 100dvh;
+        }
+
+        /* Floating music FAB */
+        #music-fab {
+            position: fixed;
+            right: 20px;
+            bottom: 30dvh;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(15, 27, 61, 0.82);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1.5px solid rgba(201, 168, 76, 0.55);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.35), 0 0 0 0 rgba(201,168,76,0.0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10000;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #music-fab:active {
+            transform: scale(0.92);
+        }
+        #music-fab svg {
+            width: 20px;
+            height: 20px;
+            color: var(--gold);
+            transition: opacity 0.2s;
+        }
+
+        /* Spinning ring when playing */
+        @keyframes spin-ring {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+        #music-fab .fab-ring {
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: var(--gold);
+            border-right-color: rgba(201,168,76,0.3);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #music-fab.playing .fab-ring {
+            opacity: 1;
+            animation: spin-ring 2.5s linear infinite;
+        }
+        #music-fab.playing {
+            box-shadow: 0 4px 24px rgba(0,0,0,0.35), 0 0 16px rgba(201,168,76,0.25);
+        }
+    </style>
+ </head>
+ <body class="w-full" style="background: rgb(253, 248, 240);">
+
+  <!-- COVER SCREEN -->
+  <section id="cover-screen" class="w-full flex flex-col items-center justify-center relative overflow-hidden pattern-bg" style="background-color: var(--navy);">
+   <div class="absolute top-4 left-4 w-20 h-20 border-t-2 border-l-2 opacity-40" style="border-color: var(--gold);"></div>
+   <div class="absolute top-4 right-4 w-20 h-20 border-t-2 border-r-2 opacity-40" style="border-color: var(--gold);"></div>
+   <div class="absolute bottom-4 left-4 w-20 h-20 border-b-2 border-l-2 opacity-40" style="border-color: var(--gold);"></div>
+   <div class="absolute bottom-4 right-4 w-20 h-20 border-b-2 border-r-2 opacity-40" style="border-color: var(--gold);"></div>
+   <div class="text-center px-6 z-10">
+    <p class="text-sm uppercase tracking-[0.3em] mb-6" style="color: rgb(201, 168, 76); font-weight: 300; font-size: 18px;">Walimatulurus</p>
+    <div class="flex items-center justify-center gap-4 mb-8 float-anim">
+      <span class="font-callig text-8xl md:text-9xl font-bold" style="color: var(--ivory);">F</span>
+      <span class="font-callig text-8xl md:text-9xl font-bold" style="color: var(--ivory);">A</span>
+    </div>
+    <h1 class="font-alex-brush text-4xl md:text-5xl mb-4" style="color: rgb(253, 248, 240); font-size: 72px;">Fahim &amp; Auni</h1>
+    <div class="gold-divider w-48 mx-auto my-6"></div>
+    <p class="text-lg tracking-wide mb-10" style="color: rgb(201, 168, 76); font-size: 26px;">Sabtu, 30 Januari 2027</p>
+    <button id="btn-open" class="px-8 py-3 border-2 rounded-lg uppercase tracking-[0.2em] text-sm font-semibold transition-all hover:scale-105 pulse-glow" style="border-color: var(--gold); color: rgb(201, 168, 76); background: transparent;" onclick="openInvitation()">Buka Undangan</button>
+
+   </div>
+  </section>
+
+  <!-- INVITATION CONTENT -->
+  <div id="invitation-content" class="w-full">
+
+   <!-- Bismillah -->
+   <section class="scroll-fade py-16 px-6 text-center pattern-border" style="background-color: var(--navy);">
+    <div class="max-w-lg mx-auto">
+     <p class="font-arabic text-3xl md:text-4xl mb-6 leading-relaxed" style="color: rgb(201, 168, 76); font-size: 48px;">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</p>
+     <p class="text-base italic" style="color: rgb(253, 248, 240); opacity: 0.8; font-size: 20px;">Dengan nama Allah Yang Maha Pemurah lagi Maha Penyayang. Segala puji bagi Allah, Tuhan sekalian alam.</p>
+    </div>
+   </section>
+
+   <!-- Family & Invitation -->
+   <section class="scroll-fade py-16 px-6 text-center relative overflow-hidden" style="background-color: var(--ivory);">
+    <div class="absolute top-6 left-6 w-12 h-12 border-t-2 border-l-2 opacity-30" style="border-color: var(--gold);"></div>
+    <div class="absolute top-6 right-6 w-12 h-12 border-t-2 border-r-2 opacity-30" style="border-color: var(--gold);"></div>
+    <div class="absolute bottom-6 left-6 w-12 h-12 border-b-2 border-l-2 opacity-30" style="border-color: var(--gold);"></div>
+    <div class="absolute bottom-6 right-6 w-12 h-12 border-b-2 border-r-2 opacity-30" style="border-color: var(--gold);"></div>
+    <div class="absolute inset-0 cream-ornament pointer-events-none"></div>
+    <div class="max-w-lg mx-auto relative z-10">
+     <p class="text-sm uppercase tracking-[0.2em] mb-8" style="color: rgb(15, 27, 61); font-size: 18px;">Dengan penuh kesyukuran, kami menjemput Dato'/Datin/Tuan/Puan/Encik/Cik</p>
+     <div class="mb-8">
+      <p class="text-lg font-semibold" style="color: rgb(15, 27, 61); font-size: 22px;">Azhar Bin Ahmad &amp; Ruzana Binti Adnan</p>
+      <p class="text-xs uppercase tracking-widest mt-1" style="color: rgb(201, 168, 76); font-size: 14px;">Ibu Bapa Pengantin Lelaki</p>
+     </div>
+     <div class="flex items-center justify-center gap-3 my-4">
+      <div class="gold-divider flex-1 max-w-[60px]"></div><span style="color: var(--gold);">✦</span>
+      <div class="gold-divider flex-1 max-w-[60px]"></div>
+     </div>
+     <div class="mb-10">
+      <p class="text-lg font-semibold" style="color: rgb(15, 27, 61); font-size: 22px;">Jamaluddin Bin Mohamed &amp; Rohana Binti Ali</p>
+      <p class="text-xs uppercase tracking-widest mt-1" style="color: rgb(201, 168, 76); font-size: 14px;">Ibu Bapa Pengantin Perempuan</p>
+     </div>
+     <div class="gold-divider w-32 mx-auto my-8"></div>
+     <p class="text-base leading-relaxed mb-8" style="color: rgb(15, 27, 61); font-size: 18px;">Dengan segala hormatnya, kami mempersilakan Dato'/Datin/Tuan/Puan/Encik/Cik ke majlis perkahwinan anakanda kami</p>
+     <div class="space-y-2 mb-3">
+      <p class="font-callig text-3xl md:text-4xl font-bold" style="color: rgb(15, 27, 61); font-size: 48px;">Fahim Adib Bin Jamaluddin</p>
+      <p class="text-sm mb-3" style="color: var(--navy); opacity: 0.7; font-size: 16px;">Putera Azhar &amp; Ruzana</p>
+      <p class="text-lg" style="color: var(--gold);">bersama</p>
+      <p class="font-callig text-3xl md:text-4xl font-bold" style="color: rgb(15, 27, 61); font-size: 48px;">Aunibilla Binti Jamaluddin</p>
+      <p class="text-sm" style="color: var(--navy); opacity: 0.7; font-size: 16px;">Puteri Jamaluddin &amp; Rohana</p>
+     </div>
+    </div>
+   </section>
+
+   <!-- Countdown -->
+   <section class="scroll-fade py-16 px-6 text-center pattern-bg" style="background-color: var(--navy);">
+    <div class="max-w-lg mx-auto">
+     <p class="text-sm uppercase tracking-[0.3em] mb-8" style="color: rgb(201, 168, 76); font-size: 16px;">Menghitung Hari</p>
+     <div id="countdown" class="flex justify-center gap-4 mb-10">
+      <div class="text-center">
+       <div id="cd-days" class="font-display text-5xl md:text-6xl font-bold" style="color: var(--ivory);">--</div>
+       <div class="text-sm uppercase tracking-wider mt-2" style="color: var(--gold);">Hari</div>
+      </div>
+      <div class="text-3xl self-center" style="color: var(--gold);">:</div>
+      <div class="text-center">
+       <div id="cd-hours" class="font-display text-5xl md:text-6xl font-bold" style="color: var(--ivory);">--</div>
+       <div class="text-sm uppercase tracking-wider mt-2" style="color: var(--gold);">Jam</div>
+      </div>
+      <div class="text-3xl self-center" style="color: var(--gold);">:</div>
+      <div class="text-center">
+       <div id="cd-mins" class="font-display text-5xl md:text-6xl font-bold" style="color: var(--ivory);">--</div>
+       <div class="text-sm uppercase tracking-wider mt-2" style="color: var(--gold);">Minit</div>
+      </div>
+      <div class="text-3xl self-center" style="color: var(--gold);">:</div>
+      <div class="text-center">
+       <div id="cd-secs" class="font-display text-5xl md:text-6xl font-bold" style="color: var(--ivory);">--</div>
+       <div class="text-sm uppercase tracking-wider mt-2" style="color: var(--gold);">Saat</div>
+      </div>
+     </div>
+     <div class="gold-divider w-32 mx-auto my-8"></div>
+     <p class="text-lg" style="color: rgb(253, 248, 240); font-size: 32px;">11:00 pagi – 4:00 petang</p>
+    </div>
+   </section>
+
+   <!-- Venue -->
+   <section class="scroll-fade py-16 px-6 text-center relative overflow-hidden" style="background-color: var(--ivory);">
+    <div class="absolute top-6 left-6 w-12 h-12 border-t-2 border-l-2 opacity-30" style="border-color: var(--gold);"></div>
+    <div class="absolute top-6 right-6 w-12 h-12 border-t-2 border-r-2 opacity-30" style="border-color: var(--gold);"></div>
+    <div class="absolute bottom-6 left-6 w-12 h-12 border-b-2 border-l-2 opacity-30" style="border-color: var(--gold);"></div>
+    <div class="absolute bottom-6 right-6 w-12 h-12 border-b-2 border-r-2 opacity-30" style="border-color: var(--gold);"></div>
+    <div class="absolute inset-0 cream-ornament pointer-events-none"></div>
+    <div class="max-w-lg mx-auto relative z-10">
+     <p class="text-sm uppercase tracking-[0.3em] mb-6" style="color: rgb(201, 168, 76); font-size: 16px;">Lokasi Majlis</p>
+     <h3 class="font-display text-2xl font-bold mb-4" style="color: rgb(15, 27, 61); font-size: 26px;">ReyMagical Event Space</h3>
+     <p class="text-base leading-relaxed mb-8" style="color: rgb(15, 27, 61); opacity: 0.8; font-size: 17px;">18, Jalan Ekoperniagaan 1, Taman Kota Masai, 81700 Pasir Gudang, Johor Darul Takzim</p>
+     <img class="w-full h-48 object-cover rounded-sm mb-8 shadow-lg" loading="lazy" src="https://images.pexels.com/photos/35017879/pexels-photo-35017879.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Dewan majlis">
+     <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <a href="https://maps.app.goo.gl/xqTGfDQbiHUu2LBXA" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm uppercase tracking-wider font-semibold rounded-lg transition hover:scale-105" style="background: rgb(15, 27, 61); color: rgb(253, 248, 240);">Google Maps</a>
+      <a href="https://waze.com/ul/hw23bmnhkt" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm uppercase tracking-wider font-semibold rounded-lg transition hover:scale-105" style="background: rgb(201, 168, 76); color: rgb(15, 27, 61);">Waze</a>
+     </div>
+    </div>
+   </section>
+
+   <!-- Programme -->
+   <section class="scroll-fade py-16 px-6 pattern-border" style="background-color: var(--navy);">
+    <div class="max-w-lg mx-auto">
+     <p class="text-sm uppercase tracking-[0.3em] mb-10 text-center" style="color: rgb(201, 168, 76); font-size: 16px;">Aturcara Majlis</p>
+     <div class="space-y-6 relative pl-8" style="border-left: 1px solid rgba(201,168,76,0.3);">
+      <div class="flex items-start gap-4 relative"><div class="timeline-dot absolute -left-[30px] top-1"></div><div><p class="text-xs uppercase tracking-wider" style="color: rgb(201, 168, 76);">11:00 AM</p><p class="text-base" style="color: rgb(253, 248, 240);">Majlis Bermula</p></div></div>
+      <div class="flex items-start gap-4 relative"><div class="timeline-dot absolute -left-[30px] top-1"></div><div><p class="text-xs uppercase tracking-wider" style="color: rgb(201, 168, 76);">12:00 PM</p><p class="text-base" style="color: rgb(253, 248, 240);">Ketibaan Pengantin</p></div></div>
+      <div class="flex items-start gap-4 relative"><div class="timeline-dot absolute -left-[30px] top-1"></div><div><p class="text-xs uppercase tracking-wider" style="color: rgb(201, 168, 76);">12:30 PM</p><p class="text-base" style="color: rgb(253, 248, 240);">Ucapan &amp; Doa</p></div></div>
+      <div class="flex items-start gap-4 relative"><div class="timeline-dot absolute -left-[30px] top-1"></div><div><p class="text-xs uppercase tracking-wider" style="color: rgb(201, 168, 76);">1:00 PM</p><p class="text-base" style="color: rgb(253, 248, 240);">Makan Beradab</p></div></div>
+      <div class="flex items-start gap-4 relative"><div class="timeline-dot absolute -left-[30px] top-1"></div><div><p class="text-xs uppercase tracking-wider" style="color: rgb(201, 168, 76);">1:30 PM</p><p class="text-base" style="color: rgb(253, 248, 240);">Sesi Memotong Kek</p></div></div>
+      <div class="flex items-start gap-4 relative"><div class="timeline-dot absolute -left-[30px] top-1"></div><div><p class="text-xs uppercase tracking-wider" style="color: rgb(201, 168, 76);">2:00 PM</p><p class="text-base" style="color: rgb(253, 248, 240);">Sesi Bergambar</p></div></div>
+      <div class="flex items-start gap-4 relative"><div class="timeline-dot absolute -left-[30px] top-1"></div><div><p class="text-xs uppercase tracking-wider" style="color: rgb(201, 168, 76);">4:00 PM</p><p class="text-base" style="color: rgb(253, 248, 240);">Majlis Bersurai</p></div></div>
+     </div>
+    </div>
+   </section>
+
+   <!-- RSVP -->
+   <section class="scroll-fade py-16 px-6 text-center relative overflow-hidden" style="background-color: var(--ivory);">
+    <div class="absolute top-6 left-6 w-12 h-12 border-t-2 border-l-2 opacity-30" style="border-color: var(--gold);"></div>
+    <div class="absolute top-6 right-6 w-12 h-12 border-t-2 border-r-2 opacity-30" style="border-color: var(--gold);"></div>
+    <div class="absolute bottom-6 left-6 w-12 h-12 border-b-2 border-l-2 opacity-30" style="border-color: var(--gold);"></div>
+    <div class="absolute bottom-6 right-6 w-12 h-12 border-b-2 border-r-2 opacity-30" style="border-color: var(--gold);"></div>
+    <div class="absolute inset-0 cream-ornament pointer-events-none"></div>
+    <div class="max-w-lg mx-auto relative z-10">
+     <p class="text-sm uppercase tracking-[0.3em] mb-6" style="color: rgb(201, 168, 76); font-size: 16px;">Pengesahan Kehadiran</p>
+     <p class="text-base leading-relaxed mb-8" style="color: rgb(15, 27, 61); font-size: 18px;">Kehadiran dan doa restu Dato'/Datin/Tuan/Puan/Encik/Cik amat kami hargai. Sila sahkan kehadiran anda dengan menekan butang di bawah.</p>
+     <a href="https://forms.gle/hVSucneWxcG6Gh9E6" target="_blank" rel="noopener noreferrer" class="inline-block px-10 py-4 text-sm uppercase tracking-[0.2em] font-semibold rounded-lg transition hover:scale-105 pulse-glow" style="background: rgb(15, 27, 61); color: rgb(201, 168, 76); border: 1px solid var(--gold);">RSVP Sekarang</a>
+    </div>
+   </section>
+
+   <!-- Footer -->
+   <footer class="scroll-fade py-10 px-6 text-center" style="background-color: var(--navy);">
+    <p class="text-sm" style="color: rgb(201, 168, 76); opacity: 0.6; font-size: 15px;">Fahim &amp; Aunibilla — 30.01.2027</p>
+   </footer>
+  </div>
+
+  <!-- Hidden audio element – swap src for your own file -->
+  <audio id="bg-music" loop preload="auto">
+    <source src="music/song.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Floating music FAB -->
+  <button id="music-fab" onclick="toggleMusic()" aria-label="Toggle music">
+    <div class="fab-ring"></div>
+    <!-- Play icon (shown when paused) -->
+    <svg id="fab-icon-play" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="display:block;">
+      <polygon points="6,3 20,12 6,21" />
+    </svg>
+    <!-- Pause icon (shown when playing) -->
+    <svg id="fab-icon-pause" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+      <rect x="5" y="3" width="4" height="18" rx="1"/>
+      <rect x="15" y="3" width="4" height="18" rx="1"/>
+    </svg>
+  </button>
+
+  <script>
+        lucide.createIcons();
+
+        function spawnPetals() {
+            const petals = ['🌸', '🌺', '🦋'];
+            setInterval(() => {
+                const petal = document.createElement('div');
+                petal.className = 'petal petal-' + ((Math.random() * 3 | 0) + 1);
+                petal.innerHTML = petals[Math.random() * petals.length | 0];
+                petal.style.left = Math.random() * 100 + '%';
+                petal.style.top = '-20px';
+                petal.style.color = '#c9a84c';
+                document.body.appendChild(petal);
+                setTimeout(() => petal.remove(), 8000);
+            }, 2000);
+        }
+        spawnPetals();
+
+        function openInvitation() {
+            document.getElementById('cover-screen').style.display = 'none';
+            document.getElementById('invitation-content').classList.add('revealed');
+            startCountdown();
+            // trigger scroll-fade on already-visible sections
+            setTimeout(() => {
+                document.querySelectorAll('.scroll-fade').forEach(el => observer.observe(el));
+            }, 100);
+        }
+
+        function startCountdown() {
+            const target = new Date('2027-01-30T03:00:00Z').getTime();
+            function update() {
+                const now = Date.now();
+                const diff = target - now;
+                if (diff <= 0) {
+                    ['cd-days','cd-hours','cd-mins','cd-secs'].forEach(id => document.getElementById(id).textContent = '0');
+                    return;
+                }
+                const d = Math.floor(diff / 86400000);
+                const h = Math.floor((diff % 86400000) / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                document.getElementById('cd-days').textContent = d;
+                document.getElementById('cd-hours').textContent = String(h).padStart(2, '0');
+                document.getElementById('cd-mins').textContent = String(m).padStart(2, '0');
+                document.getElementById('cd-secs').textContent = String(s).padStart(2, '0');
+            }
+            update();
+            setInterval(update, 1000);
+        }
+
+        let audioCtx, isPlaying = false;
+        let oscillators = [];
+        const bgAudio = document.getElementById('bg-music');
+        const fab = document.getElementById('music-fab');
+        const iconPlay = document.getElementById('fab-icon-play');
+        const iconPause = document.getElementById('fab-icon-pause');
+
+        function setFabState(playing) {
+            if (playing) {
+                fab.classList.add('playing');
+                iconPlay.style.display  = 'none';
+                iconPause.style.display = 'block';
+            } else {
+                fab.classList.remove('playing');
+                iconPlay.style.display  = 'block';
+                iconPause.style.display = 'none';
+            }
+        }
+
+        function createRomanticMelody() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const chords = [
+                [261.63, 329.63, 392.00],
+                [293.66, 349.23, 440.00],
+                [329.63, 392.00, 493.88],
+                [261.63, 329.63, 392.00]
+            ];
+            let chordIndex = 0;
+            function playChord() {
+                if (!isPlaying) return;
+                oscillators.forEach(({ osc, gain }) => gain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5));
+                const currentChord = chords[chordIndex % chords.length];
+                oscillators = currentChord.map(freq => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.3);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 3);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    return { osc, gain };
+                });
+                chordIndex++;
+                setTimeout(playChord, 3000);
+            }
+            playChord();
+        }
+
+        function toggleMusic() {
+            const hasSrc = bgAudio.querySelector('source') !== null || bgAudio.src;
+
+            if (!isPlaying) {
+                isPlaying = true;
+                setFabState(true);
+                if (hasSrc) {
+                    bgAudio.play().catch(() => {});
+                } else {
+                    // Fallback: Web Audio API synth
+                    createRomanticMelody();
+                }
+            } else {
+                isPlaying = false;
+                setFabState(false);
+                if (hasSrc) {
+                    bgAudio.pause();
+                } else {
+                    oscillators.forEach(({ osc, gain }) => {
+                        gain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
+                        setTimeout(() => { try { osc.stop(); } catch(e){} }, 600);
+                    });
+                    oscillators = [];
+                }
+            }
+        }
+
+        // Sync FAB if audio ends unexpectedly
+        bgAudio.addEventListener('ended', () => { isPlaying = false; setFabState(false); });
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.scroll-fade').forEach(el => observer.observe(el));
+    </script>
+</body></html>
