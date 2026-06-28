@@ -6,6 +6,9 @@
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=Amiri:wght@400;700&family=Tangerine:wght@400;700&family=Great+Vibes&family=Alex+Brush&family=Scheherazade+New:wght@400;700&family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <style>
         :root {
             --navy: #0f1b3d;
@@ -695,10 +698,34 @@
     })();
 
 
-    /* ── Wishes ── */
+    /* ── Firebase init ── */
+    const firebaseConfig = {
+      apiKey: "AIzaSyBKqiNmEAuxyYWtyqITZ0NSrEnzJIuO1_o",
+      authDomain: "fahim-auni-wedding.firebaseapp.com",
+      projectId: "fahim-auni-wedding",
+      storageBucket: "fahim-auni-wedding.firebasestorage.app",
+      messagingSenderId: "695568427433",
+      appId: "1:695568427433:web:205578eccac0f5b2be3cb8",
+      databaseURL: "https://fahim-auni-wedding-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const wishesRef = db.ref('wishes');
+
+    /* ── Wishes state ── */
     let wishes = [];
     let tickerIndex = 0;
     let tickerTimer = null;
+
+    /* Load + listen for real-time updates */
+    wishesRef.on('value', snapshot => {
+      wishes = [];
+      snapshot.forEach(child => {
+        wishes.push(child.val());
+      });
+      tickerIndex = 0;
+      renderTicker();
+    });
 
     function openWishModal() {
       document.getElementById('wish-overlay').classList.add('open');
@@ -721,12 +748,21 @@
         setTimeout(() => missing.style.borderColor = '', 1200);
         return;
       }
-      wishes.push({ name, text });
-      document.getElementById('wish-name').value = '';
-      document.getElementById('wish-text').value = '';
-      closeWishModal();
-      showToast();
-      renderTicker();
+
+      /* Save to Firebase — this triggers the real-time listener above for everyone */
+      wishesRef.push({
+        name: name,
+        text: text,
+        timestamp: Date.now()
+      }).then(() => {
+        document.getElementById('wish-name').value = '';
+        document.getElementById('wish-text').value = '';
+        closeWishModal();
+        showToast();
+      }).catch(err => {
+        console.error('Firebase write error:', err);
+        alert('Ralat menghantar ucapan. Sila cuba lagi.');
+      });
     }
 
     function showToast() {
@@ -742,14 +778,13 @@
       if (wishes.length === 0) {
         if (noMsg) noMsg.style.display = '';
         clearInterval(tickerTimer);
+        ticker.querySelectorAll('.wish-card').forEach(c => c.remove());
         return;
       }
       if (noMsg) noMsg.style.display = 'none';
 
-      // clear existing cards
       ticker.querySelectorAll('.wish-card').forEach(c => c.remove());
 
-      // build a card for each wish (only one visible at a time)
       wishes.forEach((w, i) => {
         const card = document.createElement('div');
         card.className = 'wish-card' + (i === tickerIndex ? ' visible' : ' hidden');
