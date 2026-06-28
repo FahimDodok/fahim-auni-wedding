@@ -72,14 +72,14 @@
         }
         .cover-child {
             opacity: 0;
-            animation: coverFadeIn 0.9s ease both;
+            animation: coverFadeIn 0.75s ease both;
             animation-fill-mode: forwards;
         }
-        .cover-child:nth-child(1) { animation-delay: 0.1s; }
-        .cover-child:nth-child(2) { animation-delay: 0.35s; }
-        .cover-child:nth-child(3) { animation-delay: 0.6s; }
-        .cover-child:nth-child(4) { animation-delay: 0.8s; }
-        .cover-child:nth-child(5) { animation-delay: 1.0s; }
+        .cover-d1 { animation-delay: 0.05s; }
+        .cover-d2 { animation-delay: 0.2s; }
+        .cover-d3 { animation-delay: 0.38s; }
+        .cover-d4 { animation-delay: 0.55s; }
+        .cover-d5 { animation-delay: 0.72s; }
 
         .pulse-glow { animation: pulse-gold 2s infinite; }
         .float-anim { animation: float 3s ease-in-out infinite; }
@@ -299,22 +299,17 @@
     <div class="absolute bottom-4 right-4 w-20 h-20 border-b-2 border-r-2 opacity-40" style="border-color:var(--gold);"></div>
 
     <div class="text-center px-6 z-10">
-      <!-- child 1 -->
-      <p class="cover-child text-sm uppercase tracking-[0.3em] mb-6" style="color:rgb(201,168,76);font-weight:300;font-size:16px;">Walimatulurus</p>
-      <!-- child 2 -->
-      <div class="cover-child flex items-center justify-center gap-4 mb-8">
+      <p class="cover-child cover-d1 text-sm uppercase tracking-[0.3em] mb-6" style="color:rgb(201,168,76);font-weight:300;font-size:16px;">Walimatulurus</p>
+      <div class="cover-child cover-d2 flex items-center justify-center gap-4 mb-8">
         <span class="font-callig text-8xl md:text-9xl font-bold float-anim" style="color:var(--ivory);display:inline-block;">F</span>
-        <span class="font-callig text-8xl md:text-9xl font-bold float-anim" style="color:var(--ivory);display:inline-block;animation-delay:0.15s;">A</span>
+        <span class="font-callig text-8xl md:text-9xl font-bold float-anim" style="color:var(--ivory);display:inline-block;">A</span>
       </div>
-      <!-- child 3 -->
-      <h1 class="cover-child font-alex-brush mb-4" style="color:rgb(253,248,240);font-size:70px;">Fahim &amp; Auni</h1>
-      <!-- child 4 -->
-      <div class="cover-child">
+      <h1 class="cover-child cover-d3 font-alex-brush mb-4" style="color:rgb(253,248,240);font-size:70px;">Fahim &amp; Auni</h1>
+      <div class="cover-child cover-d4">
         <div class="gold-divider w-48 mx-auto my-6"></div>
         <p class="tracking-wide mb-10" style="color:rgb(201,168,76);font-size:24px;">Sabtu, 30 Januari 2027</p>
       </div>
-      <!-- child 5 -->
-      <button class="cover-child px-8 py-3 border-2 rounded-lg uppercase tracking-[0.2em] text-sm font-semibold transition-all hover:scale-105 pulse-glow"
+      <button class="cover-child cover-d5 px-8 py-3 border-2 rounded-lg uppercase tracking-[0.2em] text-sm font-semibold transition-all hover:scale-105 pulse-glow"
               style="border-color:var(--gold);color:rgb(201,168,76);background:transparent;"
               onclick="openInvitation()">Buka Undangan</button>
     </div>
@@ -579,7 +574,7 @@
             el.style.opacity = '1';
             el.style.transform = 'translateY(0)';
         });
-    }, 2200);
+    }, 1600);
 
     /* ── Open / Back ── */
     function openInvitation() {
@@ -827,38 +822,46 @@
 
       if (wishes.length === 0) {
         if (noMsg) noMsg.style.display = '';
-        clearInterval(tickerTimer);
+        stopTicker();
         ticker.querySelectorAll('.wish-card').forEach(c => c.remove());
         return;
       }
       if (noMsg) noMsg.style.display = 'none';
 
+      // Rebuild cards
       ticker.querySelectorAll('.wish-card').forEach(c => c.remove());
+      tickerIndex = 0;
 
       wishes.forEach((w, i) => {
         const card = document.createElement('div');
-        card.className = 'wish-card' + (i === tickerIndex ? ' visible' : ' hidden');
-        card.innerHTML = `
-          <p class="font-caveat" style="color:var(--ivory);font-size:24px;line-height:1.4;">"${w.text}"</p>
-          <p class="mt-2 font-caveat" style="color:var(--gold);font-size:18px;">— ${w.name}</p>
-        `;
+        card.className = 'wish-card' + (i === 0 ? ' visible' : '');
+        card.innerHTML =
+          '<p class="font-caveat" style="color:var(--ivory);font-size:24px;line-height:1.4;">"' + w.text + '"</p>' +
+          '<p class="mt-2 font-caveat" style="color:var(--gold);font-size:18px;">— ' + w.name + '</p>';
         ticker.appendChild(card);
       });
 
-      clearInterval(tickerTimer);
-      if (wishes.length > 1) {
-        tickerTimer = setInterval(() => {
-          const cards = ticker.querySelectorAll('.wish-card');
-          // fade out current
-          cards[tickerIndex].classList.remove('visible');
-          const next = (tickerIndex + 1) % wishes.length;
-          // wait for fade-out to finish, then fade in next
-          setTimeout(() => {
-            tickerIndex = next;
-            cards[tickerIndex].classList.add('visible');
-          }, 850);
-        }, 3500);
-      }
+      stopTicker();
+      if (wishes.length > 1) startTicker();
+    }
+
+    function stopTicker() {
+      if (tickerTimer) { clearInterval(tickerTimer); tickerTimer = null; }
+    }
+
+    function startTicker() {
+      tickerTimer = setInterval(() => {
+        const cards = document.querySelectorAll('#wish-ticker .wish-card');
+        if (!cards.length) return;
+        // fade out current
+        cards[tickerIndex].classList.remove('visible');
+        const next = (tickerIndex + 1) % cards.length;
+        // fade in next after transition completes
+        setTimeout(() => {
+          tickerIndex = next;
+          cards[tickerIndex].classList.add('visible');
+        }, 800);
+      }, 3800);
     }
 
     /* ── Scroll observer ── */
