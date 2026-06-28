@@ -267,16 +267,26 @@
 
         /* ── Wish ticker ── */
         #wish-ticker {
-            min-height: 80px;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
+            position: relative;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .wish-card {
+            position: absolute;
+            width: 100%;
             text-align: center;
-            transition: opacity 0.6s ease, transform 0.6s ease;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+            pointer-events: none;
         }
-        .wish-card.hidden { opacity: 0; transform: translateY(8px); pointer-events:none; position:absolute; }
-        .wish-card.visible { opacity: 1; transform: translateY(0); }
+        .wish-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body class="w-full" style="background:rgb(253,248,240);">
@@ -292,9 +302,9 @@
       <!-- child 1 -->
       <p class="cover-child text-sm uppercase tracking-[0.3em] mb-6" style="color:rgb(201,168,76);font-weight:300;font-size:16px;">Walimatulurus</p>
       <!-- child 2 -->
-      <div class="cover-child flex items-center justify-center gap-4 mb-8 float-anim">
-        <span class="font-callig text-8xl md:text-9xl font-bold" style="color:var(--ivory);">F</span>
-        <span class="font-callig text-8xl md:text-9xl font-bold" style="color:var(--ivory);">A</span>
+      <div class="cover-child flex items-center justify-center gap-4 mb-8">
+        <span class="font-callig text-8xl md:text-9xl font-bold float-anim" style="color:var(--ivory);display:inline-block;">F</span>
+        <span class="font-callig text-8xl md:text-9xl font-bold float-anim" style="color:var(--ivory);display:inline-block;animation-delay:0.15s;">A</span>
       </div>
       <!-- child 3 -->
       <h1 class="cover-child font-alex-brush mb-4" style="color:rgb(253,248,240);font-size:70px;">Fahim &amp; Auni</h1>
@@ -839,12 +849,15 @@
       if (wishes.length > 1) {
         tickerTimer = setInterval(() => {
           const cards = ticker.querySelectorAll('.wish-card');
+          // fade out current
           cards[tickerIndex].classList.remove('visible');
-          cards[tickerIndex].classList.add('hidden');
-          tickerIndex = (tickerIndex + 1) % wishes.length;
-          cards[tickerIndex].classList.remove('hidden');
-          cards[tickerIndex].classList.add('visible');
-        }, 3000);
+          const next = (tickerIndex + 1) % wishes.length;
+          // wait for fade-out to finish, then fade in next
+          setTimeout(() => {
+            tickerIndex = next;
+            cards[tickerIndex].classList.add('visible');
+          }, 850);
+        }, 3500);
       }
     }
 
