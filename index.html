@@ -189,20 +189,21 @@
             position: fixed; inset: 0; z-index: 20000;
             background: rgba(10,16,35,0.7);
             backdrop-filter: blur(4px);
-            display: flex; align-items: flex-end; justify-content: center;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
             opacity: 0; pointer-events: none;
-            transition: opacity 0.35s ease;
+            transition: opacity 0.3s ease;
         }
         #wish-overlay.open { opacity: 1; pointer-events: all; }
         #wish-sheet {
-            width: 100%; max-width: 520px;
+            width: 100%; max-width: 420px;
             background: var(--ivory);
-            border-radius: 20px 20px 0 0;
-            padding: 28px 24px 36px;
-            transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(.32,.72,0,1);
+            border-radius: 20px;
+            padding: 28px 24px 28px;
+            transform: translateY(24px) scale(0.97);
+            transition: transform 0.35s cubic-bezier(.32,.72,0,1);
         }
-        #wish-overlay.open #wish-sheet { transform: translateY(0); }
+        #wish-overlay.open #wish-sheet { transform: translateY(0) scale(1); }
 
         #wish-sheet input,
         #wish-sheet textarea {
@@ -216,18 +217,53 @@
         #wish-sheet input:focus,
         #wish-sheet textarea:focus { border-color: var(--gold); }
 
-        /* ── Toast ── */
+        /* ── iPhone-style top toast ── */
         #wish-toast {
-            position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px);
-            background: var(--navy); color: var(--gold);
-            border: 1px solid rgba(201,168,76,0.4);
-            padding: 10px 22px; border-radius: 999px;
-            font-size: 13px; letter-spacing: 0.05em;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-120%);
             z-index: 30000;
+            pointer-events: none;
+            min-width: 240px;
+            max-width: calc(100vw - 40px);
+            background: rgba(20, 20, 25, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.06) inset;
+            border: 0.5px solid rgba(255,255,255,0.10);
+            transition: transform 0.45s cubic-bezier(.32,.72,0,1), opacity 0.3s ease;
+            opacity: 0;
         }
-        #wish-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        #wish-toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        #wish-toast .toast-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: #c0392b;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            font-size: 16px;
+        }
+        #wish-toast .toast-body { flex: 1; }
+        #wish-toast .toast-title {
+            font-size: 12px; font-weight: 600;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 0.04em;
+            line-height: 1.2;
+        }
+        #wish-toast .toast-msg {
+            font-size: 13px; font-weight: 500;
+            color: #fff;
+            line-height: 1.3;
+            margin-top: 1px;
+        }
 
         /* ── Wish ticker ── */
         #wish-ticker {
@@ -473,9 +509,7 @@
   <!-- ═══ Wish Modal (bottom sheet) ═══ -->
   <div id="wish-overlay" onclick="handleOverlayClick(event)">
     <div id="wish-sheet">
-      <!-- drag handle -->
-      <div class="w-10 h-1 rounded-full mx-auto mb-5" style="background:rgba(15,27,61,0.2);"></div>
-      <p class="text-center font-semibold mb-5" style="color:var(--navy);font-size:16px;letter-spacing:0.05em;">Ucapan untuk Fahim &amp; Auni 💛</p>
+      <p class="text-center font-semibold mb-5" style="color:#c0392b;font-size:16px;letter-spacing:0.05em;">Ucapan untuk Fahim &amp; Auni ❤️</p>
       <div class="space-y-3">
         <input id="wish-name" type="text" placeholder="Nama anda..." maxlength="60">
         <textarea id="wish-text" rows="3" placeholder="Tulis ucapan di sini..." maxlength="200"></textarea>
@@ -490,7 +524,13 @@
   </div>
 
   <!-- Toast -->
-  <div id="wish-toast">✦ Ucapan dihantar! Terima kasih 🌸</div>
+  <div id="wish-toast">
+    <div class="toast-icon">❤️</div>
+    <div class="toast-body">
+      <div class="toast-title">UNDANGAN FAHIM &amp; AUNI</div>
+      <div class="toast-msg">Ucapan dihantar! Terima kasih 🌸</div>
+    </div>
+  </div>
 
   <!-- Audio -->
   <audio id="bg-music" loop preload="auto">
