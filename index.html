@@ -4,7 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Undangan Perkahwinan Fahim &amp; Aunibilla</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=Amiri:wght@400;700&family=Tangerine:wght@400;700&family=Great+Vibes&family=Alex+Brush&family=Scheherazade+New:wght@400;700&family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=Amiri:wght@400;700&family=Tangerine:wght@400;700&family=Great+Vibes&family=Alex+Brush&family=Scheherazade+New:wght@400;700&family=Caveat:wght@400;600;700&family=Pinyon+Script&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -183,6 +183,7 @@
         #music-fab.playing { box-shadow:0 4px 24px rgba(0,0,0,.35),0 0 16px rgba(201,168,76,.25); }
 
         .font-caveat { font-family: 'Caveat', cursive; }
+        .font-pinyon { font-family: 'Pinyon Script', cursive; }
 
         /* ── Wish modal (slides up / slides down) ── */
         #wish-overlay {
@@ -299,21 +300,17 @@
     <div class="absolute bottom-4 right-4 w-20 h-20 border-b-2 border-r-2 opacity-40" style="border-color:var(--gold);"></div>
 
     <div class="text-center px-6 z-10">
-      <p class="cover-child cover-d1 text-sm uppercase tracking-[0.3em] mb-6" style="color:rgb(201,168,76);font-weight:300;font-size:16px;">Walimatulurus</p>
-      <div class="cover-child cover-d2 flex items-center justify-center gap-4 mb-8">
-        <span class="font-callig text-8xl md:text-9xl font-bold float-anim" style="color:var(--ivory);display:inline-block;">F</span>
-        <span class="font-callig text-8xl md:text-9xl font-bold float-anim" style="color:var(--ivory);display:inline-block;">A</span>
+      <p class="cover-child cover-d1 text-sm uppercase tracking-[0.3em] mb-10" style="color:rgb(201,168,76);font-weight:300;font-size:16px;">Walimatulurus</p>
+      <div class="cover-child cover-d2 mb-2" style="display:flex;flex-direction:column;align-items:center;gap:0;">
+        <img src="fahim.png"      alt="Fahim"  style="width:72%;max-width:280px;display:block;">
+        <img src="ampersand.png"  alt="&"      style="width:18%;max-width:72px;display:block;margin:-6px 0;">
+        <img src="auni.png"       alt="Auni"   style="width:62%;max-width:240px;display:block;">
       </div>
-      <div class="cover-child cover-d3 mb-4 leading-none" style="color:rgb(253,248,240);">
-        <p class="font-alex-brush" style="font-size:70px;line-height:1;">Fahim</p>
-        <p class="font-alex-brush" style="font-size:36px;line-height:1.2;color:var(--gold);">&amp;</p>
-        <p class="font-alex-brush" style="font-size:70px;line-height:1;">Auni</p>
-      </div>
-      <div class="cover-child cover-d4">
-        <div class="gold-divider w-48 mx-auto my-6"></div>
+      <div class="cover-child cover-d3">
+        <div class="gold-divider w-48 mx-auto my-8"></div>
         <p class="mb-10" style="color:rgb(201,168,76);font-size:22px;font-family:'Playfair Display',serif;font-style:italic;letter-spacing:0.06em;">Sabtu, 30 Januari 2027</p>
       </div>
-      <button class="cover-child cover-d5 px-8 py-3 border-2 rounded-lg uppercase tracking-[0.2em] text-sm font-semibold transition-all hover:scale-105 pulse-glow"
+      <button class="cover-child cover-d4 px-8 py-3 border-2 rounded-lg uppercase tracking-[0.2em] text-sm font-semibold transition-all hover:scale-105 pulse-glow"
               style="border-color:var(--gold);color:rgb(201,168,76);background:transparent;"
               onclick="openInvitation()">Buka Undangan</button>
     </div>
@@ -491,7 +488,7 @@
       <div class="absolute bottom-6 right-6 w-12 h-12 border-b-2 border-r-2 opacity-20" style="border-color:var(--gold);"></div>
       <div class="max-w-lg mx-auto relative z-10">
         <p class="text-sm uppercase tracking-[0.3em] mb-3" style="color:var(--gold);font-size:14px;">Ucapan &amp; Doa</p>
-        <p class="mb-8" style="color:rgba(253,248,240,0.7);font-size:14px;">Titipkan ucapan dan doa anda untuk kami</p>
+        <p class="mb-8" style="color:rgba(253,248,240,0.7);font-size:14px;">Titipkan ucapan dan doa kalian untuk kami</p>
 
         <!-- Wish ticker -->
         <div id="wish-ticker" class="relative mb-8 px-4">
@@ -511,7 +508,7 @@
 
     <!-- Footer -->
     <footer class="scroll-fade py-10 px-6 text-center" style="background-color:var(--navy);">
-      <p style="color:rgb(201,168,76);opacity:.6;font-size:14px;">Fahim &amp; Auni — 30.01.2027</p>
+      <p style="color:rgb(201,168,76);opacity:.6;font-size:14px;">Fahim &amp; Aunibilla — 30.01.2027</p>
     </footer>
   </div>
 
@@ -578,7 +575,7 @@
             el.style.opacity = '1';
             el.style.transform = 'translateY(0)';
         });
-    }, 1600);
+    }, 1400);
 
     /* ── Open / Back ── */
     function openInvitation() {
