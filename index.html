@@ -131,7 +131,9 @@
             opacity: 0;
             animation: coverFadeIn 0.75s ease both;
             animation-fill-mode: forwards;
+            animation-play-state: paused;
         }
+        .cover-child.anim-ready { animation-play-state: running; }
         .cover-d1 { animation-delay: 0.05s; }
         .cover-d2 { animation-delay: 0.2s; }
         .cover-d3 { animation-delay: 0.38s; }
@@ -749,7 +751,13 @@
             const delay   = Math.max(0, minWait - elapsed);
             setTimeout(() => {
                 loader.classList.add('hide');
-                setTimeout(() => loader.remove(), 650);
+                // Start cover animations AFTER loader fades (0.6s fade out)
+                setTimeout(() => {
+                    document.querySelectorAll('.cover-child').forEach(el => {
+                        el.classList.add('anim-ready');
+                    });
+                    loader.remove();
+                }, 650);
             }, delay);
         }
 
@@ -907,13 +915,14 @@
     }
     attachPressHold('btn-wish', 'rgba(201,168,76,0.08)');
 
-    // Safety net: after cover animations finish, ensure all children are fully visible
+    // Safety net: fires after loader + animations have fully completed
     setTimeout(() => {
         document.querySelectorAll('.cover-child').forEach(el => {
+            el.classList.add('anim-ready');
             el.style.opacity = '1';
             el.style.transform = 'translateY(0)';
         });
-    }, 1400);
+    }, 3200);
 
     /* ── Open / Back ── */
     function openInvitation() {
