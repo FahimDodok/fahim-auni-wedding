@@ -118,21 +118,6 @@
         /* ── Pages ── */
         #cover-screen    { min-height: 100dvh; }
 
-        /* ── Rubber band stretch ── */
-        @keyframes rubberBandUp {
-            0%   { transform: scaleY(1)    translateY(0); }
-            40%  { transform: scaleY(0.97) translateY(-18px); }
-            70%  { transform: scaleY(1.01) translateY(4px); }
-            100% { transform: scaleY(1)    translateY(0); }
-        }
-        @keyframes rubberBandDown {
-            0%   { transform: scaleY(1)    translateY(0); }
-            40%  { transform: scaleY(0.97) translateY(18px); }
-            70%  { transform: scaleY(1.01) translateY(-4px); }
-            100% { transform: scaleY(1)    translateY(0); }
-        }
-        #cover-screen.bounce-up   { animation: rubberBandUp   0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        #cover-screen.bounce-down { animation: rubberBandDown 0.5s cubic-bezier(.36,.07,.19,.97) both; }
         #invitation-content {
             display: none;
             opacity: 0;
@@ -697,43 +682,65 @@
     }
     spawnPetals();
 
-    /* ── Cover rubber band on scroll attempt ── */
-    (function () {
-        const cover = document.getElementById('cover-screen');
-        let lastY = null;
-        let cooling = false;
 
-        function trigger(dir) {
-            if (cooling) return;
-            cooling = true;
-            cover.classList.remove('bounce-up', 'bounce-down');
-            // force reflow so animation restarts
-            void cover.offsetWidth;
-            cover.classList.add(dir === 'up' ? 'bounce-up' : 'bounce-down');
-            setTimeout(() => {
-                cover.classList.remove('bounce-up', 'bounce-down');
-                cooling = false;
-            }, 520);
+
+    /* ── Cover live rubber band (follows finger in real time) ── */
+    (function () {
+        const cover  = document.getElementById('cover-screen');
+        const inner  = cover.querySelector('.text-center');
+        let startY   = null;
+        let pulling  = false;
+        const MAX    = 80;
+        const RESIST = 0.3;
+
+        function applyStretch(dy) {
+            const clamped = Math.max(-MAX, Math.min(MAX, dy * RESIST));
+            const scale   = 1 + Math.abs(clamped) * 0.0018;
+            cover.style.transition = 'none';
+            inner.style.transition = 'none';
+            cover.style.transform  = 'scaleY(' + scale + ')';
+            inner.style.transform  = 'translateY(' + (clamped * 0.5) + 'px)';
         }
 
-        // Touch
+        function snapBack() {
+            cover.style.transition = 'transform 0.45s cubic-bezier(.36,.07,.19,.97)';
+            inner.style.transition = 'transform 0.45s cubic-bezier(.36,.07,.19,.97)';
+            cover.style.transform  = 'scaleY(1)';
+            inner.style.transform  = 'translateY(0)';
+            setTimeout(() => {
+                cover.style.transition = '';
+                inner.style.transition = '';
+            }, 460);
+        }
+
         cover.addEventListener('touchstart', e => {
-            lastY = e.touches[0].clientY;
+            startY = e.touches[0].clientY; pulling = true;
         }, { passive: true });
 
         cover.addEventListener('touchmove', e => {
-            if (!lastY) return;
-            const dy = e.touches[0].clientY - lastY;
-            if (Math.abs(dy) > 8) trigger(dy < 0 ? 'up' : 'down');
-            lastY = e.touches[0].clientY;
+            if (!pulling || startY === null) return;
+            applyStretch(e.touches[0].clientY - startY);
         }, { passive: true });
 
-        cover.addEventListener('touchend', () => { lastY = null; }, { passive: true });
-
-        // Mouse wheel (desktop)
-        cover.addEventListener('wheel', e => {
-            trigger(e.deltaY > 0 ? 'up' : 'down');
+        cover.addEventListener('touchend', () => {
+            pulling = false; startY = null; snapBack();
         }, { passive: true });
+
+        cover.addEventListener('touchcancel', () => {
+            pulling = false; startY = null; snapBack();
+        }, { passive: true });
+
+        cover.addEventListener('mousedown', e => {
+            startY = e.clientY; pulling = true;
+        });
+        document.addEventListener('mousemove', e => {
+            if (!pulling) return;
+            applyStretch(e.clientY - startY);
+        });
+        document.addEventListener('mouseup', () => {
+            if (!pulling) return;
+            pulling = false; startY = null; snapBack();
+        });
     })();
 
     /* ── Press & hold for interactive buttons ── */
