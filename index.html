@@ -86,10 +86,27 @@
 
         .scroll-fade {
             opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.7s ease, transform 0.7s ease;
+            transform: translateY(32px);
+            transition: opacity 0.55s cubic-bezier(.22,.61,.36,1),
+                        transform 0.55s cubic-bezier(.22,.61,.36,1);
         }
-        .scroll-fade.visible { opacity:1; transform:translateY(0); }
+        .scroll-fade.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Children inside sections stagger */
+        .scroll-fade > * {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.5s cubic-bezier(.22,.61,.36,1),
+                        transform 0.5s cubic-bezier(.22,.61,.36,1);
+        }
+        .scroll-fade.visible > *:nth-child(1) { opacity:1; transform:translateY(0); transition-delay: 0.05s; }
+        .scroll-fade.visible > *:nth-child(2) { opacity:1; transform:translateY(0); transition-delay: 0.15s; }
+        .scroll-fade.visible > *:nth-child(3) { opacity:1; transform:translateY(0); transition-delay: 0.25s; }
+        .scroll-fade.visible > *:nth-child(4) { opacity:1; transform:translateY(0); transition-delay: 0.35s; }
+        .scroll-fade.visible > *:nth-child(5) { opacity:1; transform:translateY(0); transition-delay: 0.42s; }
+        .scroll-fade.visible > *:nth-child(6) { opacity:1; transform:translateY(0); transition-delay: 0.48s; }
 
         .gold-divider {
             height: 1px;
@@ -98,8 +115,19 @@
 
         /* ── Pages ── */
         #cover-screen    { min-height: 100dvh; }
-        #invitation-content { display: none; }
-        #invitation-content.revealed { display: block; }
+        #invitation-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(18px);
+        }
+        #invitation-content.revealed {
+            display: block;
+        }
+        #invitation-content.animated {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.55s ease, transform 0.55s cubic-bezier(.22,.61,.36,1);
+        }
 
         /* ── Back button ── */
         #back-btn {
@@ -637,18 +665,42 @@
 
     /* ── Open / Back ── */
     function openInvitation() {
-      document.getElementById('cover-screen').style.display = 'none';
-      document.getElementById('invitation-content').classList.add('revealed');
-      document.getElementById('back-btn').classList.add('visible');
+      const cover   = document.getElementById('cover-screen');
+      const content = document.getElementById('invitation-content');
+      const backBtn = document.getElementById('back-btn');
+
+      cover.style.display = 'none';
       window.scrollTo({ top:0, behavior:'instant' });
+
+      // Reset all scroll-fade sections so animations replay
+      document.querySelectorAll('.scroll-fade').forEach(el => {
+        el.classList.remove('visible');
+        observer.unobserve(el);
+      });
+
+      content.classList.add('revealed');
+      content.classList.remove('animated');
+
+      // Trigger page fade-in
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          content.classList.add('animated');
+        });
+      });
+
+      backBtn.classList.add('visible');
       startCountdown();
+
+      // Start observing after transition
       setTimeout(() => {
         document.querySelectorAll('.scroll-fade').forEach(el => observer.observe(el));
-      }, 100);
+      }, 120);
     }
 
     function goBack() {
-      document.getElementById('invitation-content').classList.remove('revealed');
+      const content = document.getElementById('invitation-content');
+      content.classList.remove('revealed');
+      content.classList.remove('animated');
       document.getElementById('back-btn').classList.remove('visible');
       document.getElementById('cover-screen').style.display = '';
       window.scrollTo({ top:0, behavior:'instant' });
@@ -923,9 +975,19 @@
       }, 3800);
     }
 
-    /* ── Scroll observer ── */
-    const observer = new IntersectionObserver(entries=>{
-      entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
-    },{threshold:0.1});
+    /* ── Scroll observer — replays when scrolling back down ── */
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+        } else {
+          // Only reset when scrolling past (below viewport)
+          // so scrolling UP keeps sections visible
+          if (e.boundingClientRect.top > 0) {
+            e.target.classList.remove('visible');
+          }
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
   </script>
 </body></html>
