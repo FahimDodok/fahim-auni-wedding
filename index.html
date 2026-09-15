@@ -213,6 +213,19 @@
         #music-fab.playing { box-shadow:0 4px 24px rgba(0,0,0,.35),0 0 16px rgba(201,168,76,.25); }
 
         .font-caveat { font-family: 'Caveat', cursive; }
+
+        /* ── Lock RSVP link colour in all states ── */
+        #btn-rsvp,
+        #btn-rsvp:link,
+        #btn-rsvp:visited,
+        #btn-rsvp:active,
+        #btn-rsvp:hover {
+            color: rgb(201,168,76) !important;
+            background: rgb(15,27,61) !important;
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
         .font-pinyon { font-family: 'Pinyon Script', cursive; }
 
         /* ── Wish modal (slides up / slides down) ── */
@@ -543,7 +556,7 @@
         <a href="https://forms.gle/hVSucneWxcG6Gh9E6" target="_blank" rel="noopener noreferrer"
            id="btn-rsvp"
            class="inline-block px-10 py-4 text-sm uppercase tracking-[0.2em] font-semibold rounded-lg pulse-glow"
-           style="background:rgb(15,27,61);color:rgb(201,168,76);border:1px solid var(--gold);">RSVP Sekarang</a>
+           style="background:rgb(15,27,61);color:rgb(201,168,76);border:1px solid var(--gold);-webkit-tap-highlight-color:transparent;text-decoration:none;">RSVP Sekarang</a>
       </div>
     </section>
 
@@ -697,7 +710,30 @@
     setTimeout(() => attachPressHold('btn-open', 'rgba(201,168,76,0.12)'), 1800);
 
     // RSVP & Wish Here — available after invitation opens
-    attachPressHold('btn-rsvp', 'rgba(201,168,76,0.08)');
+    // RSVP is an <a> tag — lock colour and use explicit original bg
+    const rsvpEl = document.getElementById('btn-rsvp');
+    if (rsvpEl) {
+      rsvpEl.style.transition = 'transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s ease';
+      const origBg = 'rgb(15,27,61)';
+      function rsvpPress() {
+        rsvpEl.style.transform = 'scale(1.1)';
+        rsvpEl.style.boxShadow = '0 0 28px rgba(201,168,76,0.5), 0 0 56px rgba(201,168,76,0.2)';
+        rsvpEl.style.background = origBg;
+        rsvpEl.style.color = 'rgb(201,168,76)';
+      }
+      function rsvpRelease() {
+        rsvpEl.style.transform = 'scale(1)';
+        rsvpEl.style.boxShadow = '';
+        rsvpEl.style.background = origBg;
+        rsvpEl.style.color = 'rgb(201,168,76)';
+      }
+      rsvpEl.addEventListener('touchstart',  rsvpPress,   { passive: true });
+      rsvpEl.addEventListener('touchend',    rsvpRelease, { passive: true });
+      rsvpEl.addEventListener('touchcancel', rsvpRelease, { passive: true });
+      rsvpEl.addEventListener('mousedown',   rsvpPress);
+      rsvpEl.addEventListener('mouseup',     rsvpRelease);
+      rsvpEl.addEventListener('mouseleave',  rsvpRelease);
+    }
     attachPressHold('btn-wish', 'rgba(201,168,76,0.08)');
 
     // Safety net: after cover animations finish, ensure all children are fully visible
