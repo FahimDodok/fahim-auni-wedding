@@ -3,6 +3,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Undangan Perkahwinan Fahim &amp; Aunibilla</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💍</text></svg>">
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=Amiri:wght@400;700&family=Tangerine:wght@400;700&family=Great+Vibes&family=Alex+Brush&family=Scheherazade+New:wght@400;700&family=Caveat:wght@400;600;700&family=Pinyon+Script&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
@@ -17,6 +18,62 @@
             --cream: #f5efe3;
         }
         body { font-family: 'Poppins', sans-serif; }
+
+        /* ── Loading screen ── */
+        #loader {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: var(--navy);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        #loader.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #loader .loader-icon {
+            font-size: 32px;
+            animation: loaderPulse 1.2s ease-in-out infinite;
+        }
+        #loader .loader-names {
+            font-family: 'Pinyon Script', cursive;
+            font-size: 42px;
+            color: var(--ivory);
+            opacity: 0;
+            animation: loaderFadeIn 0.8s ease 0.3s forwards;
+        }
+        #loader .loader-dots {
+            display: flex;
+            gap: 6px;
+        }
+        #loader .loader-dots span {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--gold);
+            opacity: 0.4;
+            animation: loaderDot 1.2s ease-in-out infinite;
+        }
+        #loader .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+        #loader .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes loaderPulse {
+            0%, 100% { transform: scale(1);    opacity: 0.7; }
+            50%       { transform: scale(1.15); opacity: 1;   }
+        }
+        @keyframes loaderFadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0);   }
+        }
+        @keyframes loaderDot {
+            0%, 100% { opacity: 0.3; transform: translateY(0);  }
+            50%       { opacity: 1;   transform: translateY(-4px); }
+        }
         .font-display { font-family: 'Playfair Display', serif; }
         .font-arabic { font-family: 'Scheherazade New', serif; }
         .font-script { font-family: 'Great Vibes', cursive; }
@@ -335,6 +392,15 @@
     </style>
 </head>
 <body class="w-full" style="background:rgb(253,248,240);">
+
+  <!-- ═══════════════ LOADER ═══════════════ -->
+  <div id="loader">
+    <div class="loader-icon">💍</div>
+    <div class="loader-names">Fahim &amp; Auni</div>
+    <div class="loader-dots">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
 
   <!-- ═══════════════ COVER ═══════════════ -->
   <section id="cover-screen" class="w-full flex flex-col items-center justify-center relative overflow-hidden pattern-bg" style="background-color:var(--navy);">
@@ -665,6 +731,29 @@
 
   <script>
     lucide.createIcons();
+
+    /* ── Loading screen ── */
+    (function () {
+        const loader  = document.getElementById('loader');
+        const minWait = 1800; // ms minimum show time
+        const start   = Date.now();
+
+        function hideLoader() {
+            const elapsed = Date.now() - start;
+            const delay   = Math.max(0, minWait - elapsed);
+            setTimeout(() => {
+                loader.classList.add('hide');
+                setTimeout(() => loader.remove(), 650);
+            }, delay);
+        }
+
+        // Hide when page is fully loaded
+        if (document.readyState === 'complete') {
+            hideLoader();
+        } else {
+            window.addEventListener('load', hideLoader);
+        }
+    })();
 
     /* ── Petals ── */
     function spawnPetals() {
