@@ -690,8 +690,8 @@
         const inner  = cover.querySelector('.text-center');
         let startY   = null;
         let pulling  = false;
-        const MAX    = 80;
-        const RESIST = 0.3;
+        const MAX    = 40;
+        const RESIST = 0.12;
 
         function applyStretch(dy) {
             const clamped = Math.max(-MAX, Math.min(MAX, dy * RESIST));
