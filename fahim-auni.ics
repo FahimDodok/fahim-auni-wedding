@@ -1,0 +1,15 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Fahim & Aunibilla Wedding//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+DTSTART:20270130T030000Z
+DTEND:20270130T080000Z
+SUMMARY:Walimatulurus Fahim & Aunibilla
+DESCRIPTION:Jemput hadir ke majlis perkahwinan Fahim & Aunibilla
+LOCATION:ReyMagical Event Space\, 18 Jalan Ekoperniagaan 1\, Taman Kota Masai\, 81700 Pasir Gudang\, Johor
+STATUS:CONFIRMED
+SEQUENCE:0
+END:VEVENT
+END:VCALENDAR
