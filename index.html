@@ -210,7 +210,8 @@
             transition: opacity 0.2s, transform 0.2s;
             -webkit-tap-highlight-color: transparent;
         }
-        #back-btn:active { opacity: 0.7; transform: scale(0.96); }
+        #back-btn { transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s ease, opacity 0.18s ease; }
+        #back-btn:active { opacity: 0.7; }
         #back-btn svg { width:16px; height:16px; }
         #back-btn.visible { display: flex; }
 
@@ -251,12 +252,17 @@
             user-select: none;
             -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
+            opacity: 0.45;
             transition: top .3s cubic-bezier(.25,.8,.25,1),
                         left .3s cubic-bezier(.25,.8,.25,1),
                         right .3s cubic-bezier(.25,.8,.25,1),
-                        box-shadow .2s ease;
+                        box-shadow .2s ease,
+                        opacity .4s ease,
+                        transform .18s cubic-bezier(.34,1.56,.64,1);
         }
-        #music-fab.dragging { transition:none; cursor:grabbing; opacity:.85; }
+        #music-fab:hover  { opacity: 1; }
+        #music-fab.active { opacity: 1; transform: scale(1.18); box-shadow: 0 6px 28px rgba(0,0,0,0.45), 0 0 20px rgba(201,168,76,0.35); }
+        #music-fab.dragging { transition: none; cursor: grabbing; opacity: 1; transform: scale(1.12); }
         #music-fab svg { width:20px; height:20px; color:var(--gold); transition:opacity .2s; }
 
         @keyframes spin-ring { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
@@ -860,6 +866,20 @@
     // Buka Undangan — wait for cover safety net to finish first
     setTimeout(() => attachPressHold('btn-open', 'rgba(201,168,76,0.12)'), 1800);
 
+    // Back button press
+    (function () {
+      const btn = document.getElementById('back-btn');
+      if (!btn) return;
+      function press()   { btn.style.transform = 'scale(1.2)'; btn.style.opacity = '1'; }
+      function release() { btn.style.transform = 'scale(1)';   btn.style.opacity = ''; }
+      btn.addEventListener('touchstart',  press,   { passive: true });
+      btn.addEventListener('touchend',    release, { passive: true });
+      btn.addEventListener('touchcancel', release, { passive: true });
+      btn.addEventListener('mousedown',   press);
+      btn.addEventListener('mouseup',     release);
+      btn.addEventListener('mouseleave',  release);
+    })();
+
     // RSVP & Wish Here — available after invitation opens
     // RSVP is an <a> tag — lock colour and use explicit original bg
     const rsvpEl = document.getElementById('btn-rsvp');
@@ -1039,6 +1059,7 @@
         startLeft=getLeft(); startTop=getTop();
         dragging=true; didMove=false;
         btn.classList.add('dragging');
+        btn.classList.add('active');
         e.preventDefault();
       },{passive:false});
 
@@ -1055,6 +1076,8 @@
       document.addEventListener('touchend', e=>{
         if(!dragging) return;
         dragging=false;
+        btn.classList.remove('dragging');
+        btn.classList.remove('active');
         const t=e.changedTouches[0];
         snapToSide(startLeft+(t.clientX-startX), startTop+(t.clientY-startY));
         if(!didMove) toggleMusic();
@@ -1068,6 +1091,7 @@
         startLeft=getLeft(); startTop=getTop();
         dragging=true; didMove=false;
         btn.classList.add('dragging');
+        btn.classList.add('active');
         e.preventDefault();
       });
       document.addEventListener('mousemove', e=>{
@@ -1080,6 +1104,8 @@
       document.addEventListener('mouseup', e=>{
         if(!dragging) return;
         dragging=false;
+        btn.classList.remove('dragging');
+        btn.classList.remove('active');
         snapToSide(startLeft+(e.clientX-startX), startTop+(e.clientY-startY));
         if(!didMove) toggleMusic();
       });
