@@ -184,6 +184,7 @@
         }
         #invitation-content.revealed {
             display: block;
+            padding-bottom: 72px;
         }
         #invitation-content.animated {
             opacity: 1;
@@ -397,7 +398,87 @@
             transform: translateY(0);
             pointer-events: auto;
         }
-    </style>
+
+        /* ── Floating bottom bar ── */
+        #float-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0; right: 0;
+            z-index: 8000;
+            display: none;
+            justify-content: space-around;
+            align-items: center;
+            padding: 12px 24px max(16px, env(safe-area-inset-bottom));
+            background: rgba(15, 27, 61, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(201,168,76,0.25);
+        }
+        #float-bar.visible { display: flex; }
+        .fbar-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px 16px;
+            border-radius: 12px;
+            transition: background 0.15s, transform 0.18s cubic-bezier(.34,1.56,.64,1);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .fbar-btn:active { transform: scale(0.92); background: rgba(201,168,76,0.08); }
+        .fbar-btn svg { width: 22px; height: 22px; stroke: var(--gold); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .fbar-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(201,168,76,0.85); font-family: 'Poppins', sans-serif; }
+
+        /* ── Bottom sheets (contact / location / calendar) ── */
+        .bsheet-overlay {
+            position: fixed; inset: 0; z-index: 9000;
+            background: rgba(10,16,35,0.6);
+            backdrop-filter: blur(4px);
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .bsheet-overlay.open { opacity: 1; pointer-events: all; }
+        .bsheet {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            z-index: 9001;
+            background: var(--ivory);
+            border-radius: 20px 20px 0 0;
+            padding: 20px 24px max(28px, env(safe-area-inset-bottom));
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(.32,.72,0,1);
+            max-width: 520px;
+            margin: 0 auto;
+        }
+        .bsheet-overlay.open .bsheet { transform: translateY(0); }
+        .bsheet-handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(15,27,61,0.15); margin: 0 auto 20px; }
+        .bsheet-title { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(15,27,61,0.4); text-align: center; margin-bottom: 18px; }
+
+        /* Contact rows */
+        .contact-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(201,168,76,0.15); }
+        .contact-row:last-of-type { border-bottom: none; }
+        .contact-info { display: flex; flex-direction: column; gap: 2px; }
+        .contact-name { font-size: 14px; font-weight: 600; color: var(--navy); }
+        .contact-role { font-size: 11px; color: rgba(15,27,61,0.45); letter-spacing: 0.03em; }
+        .contact-btns { display: flex; gap: 12px; }
+        .contact-icon-btn { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(15,27,61,0.06); border: 1px solid rgba(201,168,76,0.3); transition: background 0.15s, transform 0.15s; text-decoration: none; }
+        .contact-icon-btn:active { transform: scale(0.92); background: rgba(201,168,76,0.12); }
+        .contact-icon-btn svg { width: 16px; height: 16px; fill: var(--navy); }
+
+        /* Calendar / maps rows */
+        .sheet-option { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px; background: rgba(15,27,61,0.04); border: 1px solid rgba(201,168,76,0.2); margin-bottom: 10px; text-decoration: none; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
+        .sheet-option:active { background: rgba(201,168,76,0.1); }
+        .sheet-option svg { width: 20px; height: 20px; flex-shrink: 0; stroke: var(--navy); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .sheet-option span { font-size: 14px; color: var(--navy); font-family: 'Poppins', sans-serif; letter-spacing: 0.02em; }
+
+        /* Map embed in location sheet */
+        .map-embed { width: 100%; height: 180px; border-radius: 14px; border: 1px solid rgba(201,168,76,0.25); overflow: hidden; margin-bottom: 14px; }
+        .map-embed iframe { width: 100%; height: 100%; border: none; display: block; }
+
+        </style>
 </head>
 <body class="w-full" style="background:rgb(253,248,240);">
 
@@ -535,31 +616,6 @@
         <div class="gold-divider w-32 mx-auto my-8"></div>
         <p style="color:rgb(253,248,240);font-size:18px;letter-spacing:0.05em;">11 AM – 4 PM</p>
 
-        <div class="flex flex-col sm:flex-row gap-3 justify-center mt-8 mx-auto" style="max-width:280px;">
-
-          <!-- Google Calendar -->
-          <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Walimatulurus+Fahim+%26+Aunibilla&dates=20270130T030000Z/20270130T080000Z&details=Jemput+hadir+ke+majlis+perkahwinan+Fahim+%26+Aunibilla&location=ReyMagical+Event+Space,+18+Jalan+Ekoperniagaan+1,+Taman+Kota+Masai,+81700+Pasir+Gudang,+Johor"
-             target="_blank"
-             class="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl transition hover:opacity-80"
-             style="background:rgba(253,248,240,0.07);border:1px solid rgba(253,248,240,0.2);color:rgba(253,248,240,0.85);font-size:13px;text-decoration:none;letter-spacing:0.04em;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;">
-              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            Google Calendar
-          </a>
-
-          <!-- Apple Calendar (ICS) -->
-          <a href="fahim-auni.ics"
-             download
-             class="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl transition hover:opacity-80"
-             style="background:rgba(253,248,240,0.07);border:1px solid rgba(253,248,240,0.2);color:rgba(253,248,240,0.85);font-size:13px;text-decoration:none;letter-spacing:0.04em;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;">
-              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            Apple Calendar
-          </a>
-
-        </div>
       </div>
     </section>
 
@@ -579,24 +635,7 @@
         <img class="w-full h-48 object-cover rounded-sm mb-8 shadow-lg" loading="lazy"
              src="https://images.pexels.com/photos/35017879/pexels-photo-35017879.jpeg?auto=compress&cs=tinysrgb&w=800"
              alt="Dewan majlis">
-        <div class="flex flex-col sm:flex-row gap-3 justify-center mx-auto" style="max-width:280px;">
-          <a href="https://maps.app.goo.gl/xqTGfDQbiHUu2LBXA" target="_blank" rel="noopener noreferrer"
-             class="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl transition hover:opacity-80"
-             style="background:rgba(15,27,61,0.07);border:1px solid rgba(15,27,61,0.25);color:rgba(15,27,61,0.85);font-size:13px;text-decoration:none;letter-spacing:0.04em;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
-            </svg>
-            Google Maps
-          </a>
-          <a href="https://waze.com/ul/hw23bmnhkt" target="_blank" rel="noopener noreferrer"
-             class="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl transition hover:opacity-80"
-             style="background:rgba(15,27,61,0.07);border:1px solid rgba(15,27,61,0.25);color:rgba(15,27,61,0.85);font-size:13px;text-decoration:none;letter-spacing:0.04em;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
-            </svg>
-            Waze
-          </a>
-        </div>
+
       </div>
     </section>
 
@@ -662,40 +701,8 @@
     </section>
 
     <!-- Footer -->
-    <footer class="scroll-fade pt-10 pb-8 px-6 text-center" style="background-color:var(--navy);">
+    <footer class="scroll-fade py-10 px-6 text-center" style="background-color:var(--navy);">
       <p style="color:rgb(201,168,76);opacity:.6;font-size:14px;">Fahim &amp; Aunibilla — 30.01.2027</p>
-
-      <div class="gold-divider w-24 mx-auto mt-8 mb-6" style="opacity:0.3;"></div>
-
-      <p class="uppercase tracking-[0.3em] mb-5" style="color:rgba(201,168,76,0.5);font-size:11px;">Contacts</p>
-      <div class="space-y-4">
-
-        <div class="flex items-center justify-between max-w-[200px] mx-auto">
-          <p style="color:rgba(253,248,240,0.7);font-size:14px;">Ruzana</p>
-          <div class="flex gap-4">
-            <a href="https://api.whatsapp.com/send?phone=60197276013" target="_blank" style="color:var(--gold);opacity:0.7;" class="hover:opacity-100 transition">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.132 1.528 5.879L.057 23.882a.5.5 0 00.611.611l6.003-1.471A11.942 11.942 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.667-.523-5.18-1.433l-.371-.22-3.844.941.961-3.844-.242-.392A9.956 9.956 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-            </a>
-            <a href="tel:0197276013" style="color:var(--gold);opacity:0.7;" class="hover:opacity-100 transition">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-            </a>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between max-w-[200px] mx-auto">
-          <p style="color:rgba(253,248,240,0.7);font-size:14px;">Rohana</p>
-          <div class="flex gap-4">
-            <a href="https://api.whatsapp.com/send?phone=601111404121" target="_blank" style="color:var(--gold);opacity:0.7;" class="hover:opacity-100 transition">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.132 1.528 5.879L.057 23.882a.5.5 0 00.611.611l6.003-1.471A11.942 11.942 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.667-.523-5.18-1.433l-.371-.22-3.844.941.961-3.844-.242-.392A9.956 9.956 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-            </a>
-            <a href="tel:01111404121" style="color:var(--gold);opacity:0.7;" class="hover:opacity-100 transition">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-            </a>
-          </div>
-        </div>
-
-      </div>
-      <div class="mt-8" style="color:rgba(201,168,76,0.25);font-size:11px;">✦</div>
     </footer>
   </div>
 
@@ -736,6 +743,93 @@
     <svg id="fab-icon-play"  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="display:block;"><polygon points="6,3 20,12 6,21"/></svg>
     <svg id="fab-icon-pause" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/></svg>
   </button>
+
+  <!-- ═══ FLOATING BOTTOM BAR ═══ -->
+  <div id="float-bar">
+    <button class="fbar-btn" onclick="openSheet('contact-sheet')">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="fbar-label">Contact</span>
+    </button>
+    <button class="fbar-btn" onclick="openSheet('location-sheet')">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      <span class="fbar-label">Location</span>
+    </button>
+    <button class="fbar-btn" onclick="openSheet('calendar-sheet')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span class="fbar-label">Calendar</span>
+    </button>
+  </div>
+
+  <!-- Contact Sheet -->
+  <div class="bsheet-overlay" id="contact-overlay" onclick="closeSheet('contact-overlay')">
+    <div class="bsheet" onclick="event.stopPropagation()">
+      <div class="bsheet-handle"></div>
+      <p class="bsheet-title">Hubungi Kami</p>
+      <div class="contact-row">
+        <div class="contact-info">
+          <span class="contact-name">Ruzana</span>
+          <span class="contact-role">Ibu Pengantin Lelaki</span>
+        </div>
+        <div class="contact-btns">
+          <a href="https://api.whatsapp.com/send?phone=60197276013" target="_blank" class="contact-icon-btn">
+            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.132 1.528 5.879L.057 23.882a.5.5 0 00.611.611l6.003-1.471A11.942 11.942 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.667-.523-5.18-1.433l-.371-.22-3.844.941.961-3.844-.242-.392A9.956 9.956 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          </a>
+          <a href="tel:0197276013" class="contact-icon-btn">
+            <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="contact-row">
+        <div class="contact-info">
+          <span class="contact-name">Rohana</span>
+          <span class="contact-role">Ibu Pengantin Perempuan</span>
+        </div>
+        <div class="contact-btns">
+          <a href="https://api.whatsapp.com/send?phone=601111404121" target="_blank" class="contact-icon-btn">
+            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.132 1.528 5.879L.057 23.882a.5.5 0 00.611.611l6.003-1.471A11.942 11.942 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.667-.523-5.18-1.433l-.371-.22-3.844.941.961-3.844-.242-.392A9.956 9.956 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          </a>
+          <a href="tel:01111404121" class="contact-icon-btn">
+            <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Location Sheet -->
+  <div class="bsheet-overlay" id="location-overlay" onclick="closeSheet('location-overlay')">
+    <div class="bsheet" onclick="event.stopPropagation()">
+      <div class="bsheet-handle"></div>
+      <p class="bsheet-title">Lokasi Majlis</p>
+      <div class="map-embed">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.1!2d103.94!3d1.47!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zUmV5TWFnaWNhbCBFdmVudCBTcGFjZQ!5e0!3m2!1sen!2smy!4v1234567890" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+      <a href="https://maps.app.goo.gl/xqTGfDQbiHUu2LBXA" target="_blank" class="sheet-option">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        <span>Google Maps</span>
+      </a>
+      <a href="https://waze.com/ul/hw23bmnhkt" target="_blank" class="sheet-option" style="margin-bottom:0;">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        <span>Waze</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Calendar Sheet -->
+  <div class="bsheet-overlay" id="calendar-overlay" onclick="closeSheet('calendar-overlay')">
+    <div class="bsheet" onclick="event.stopPropagation()">
+      <div class="bsheet-handle"></div>
+      <p class="bsheet-title">Simpan Tarikh</p>
+      <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Walimatulurus+Fahim+%26+Aunibilla&dates=20270130T030000Z/20270130T080000Z&details=Jemput+hadir+ke+majlis+perkahwinan+Fahim+%26+Aunibilla&location=ReyMagical+Event+Space,+18+Jalan+Ekoperniagaan+1,+Taman+Kota+Masai,+81700+Pasir+Gudang,+Johor" target="_blank" class="sheet-option">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Google Calendar</span>
+      </a>
+      <a href="fahim-auni.ics" download class="sheet-option" style="margin-bottom:0;">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Apple Calendar</span>
+      </a>
+    </div>
+  </div>
 
   <script>
     lucide.createIcons();
@@ -933,7 +1027,6 @@
       cover.style.display = 'none';
       window.scrollTo({ top:0, behavior:'instant' });
 
-      // Reset all scroll-fade sections so animations replay
       document.querySelectorAll('.scroll-fade').forEach(el => {
         el.classList.remove('visible');
         observer.unobserve(el);
@@ -942,7 +1035,6 @@
       content.classList.add('revealed');
       content.classList.remove('animated');
 
-      // Trigger page fade-in
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           content.classList.add('animated');
@@ -950,9 +1042,9 @@
       });
 
       backBtn.classList.add('visible');
+      document.getElementById('float-bar').classList.add('visible');
       startCountdown();
 
-      // Start observing after transition
       setTimeout(() => {
         document.querySelectorAll('.scroll-fade').forEach(el => observer.observe(el));
       }, 120);
@@ -963,8 +1055,19 @@
       content.classList.remove('revealed');
       content.classList.remove('animated');
       document.getElementById('back-btn').classList.remove('visible');
+      document.getElementById('float-bar').classList.remove('visible');
       document.getElementById('cover-screen').style.display = '';
       window.scrollTo({ top:0, behavior:'instant' });
+    }
+
+    /* ── Bottom sheet open/close ── */
+    function openSheet(overlayId) {
+      document.getElementById(overlayId).classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeSheet(overlayId) {
+      document.getElementById(overlayId).classList.remove('open');
+      document.body.style.overflow = '';
     }
 
     /* ── Countdown ── */
