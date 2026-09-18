@@ -184,7 +184,7 @@
         }
         #invitation-content.revealed {
             display: block;
-            padding-bottom: 72px;
+            padding-bottom: 100px;
         }
         #invitation-content.animated {
             opacity: 1;
@@ -402,19 +402,32 @@
         /* ── Floating bottom bar ── */
         #float-bar {
             position: fixed;
-            bottom: 0;
-            left: 0; right: 0;
+            bottom: max(20px, env(safe-area-inset-bottom));
+            left: 24px;
+            right: 24px;
             z-index: 8000;
-            display: none;
+            display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 12px 24px max(16px, env(safe-area-inset-bottom));
+            padding: 12px 8px;
             background: rgba(15, 27, 61, 0.88);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(201,168,76,0.25);
+            border: 1px solid rgba(201,168,76,0.25);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2);
+            /* Hidden by default — animates in */
+            opacity: 0;
+            transform: translateY(30px);
+            pointer-events: none;
+            transition: opacity 0.45s cubic-bezier(.22,.61,.36,1),
+                        transform 0.45s cubic-bezier(.22,.61,.36,1);
         }
-        #float-bar.visible { display: flex; }
+        #float-bar.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
         .fbar-btn {
             display: flex;
             flex-direction: column;
