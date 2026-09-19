@@ -97,6 +97,10 @@
         /* RSVP lock */
         #btn-rsvp,#btn-rsvp:link,#btn-rsvp:visited,#btn-rsvp:active,#btn-rsvp:hover{color:rgb(201,168,76)!important;background:rgb(15,27,61)!important;text-decoration:none;-webkit-tap-highlight-color:transparent;outline:none}
 
+        /* Hantar Ucapan lock */
+        #btn-hantar{-webkit-tap-highlight-color:transparent;outline:none;}
+        #btn-hantar:active{background:var(--navy)!important;color:var(--gold)!important;}
+
         /* Wish modal */
         #wish-overlay{position:fixed;inset:0;z-index:20000;background:rgba(10,16,35,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s ease}
         #wish-overlay.open{opacity:1;pointer-events:all}
@@ -636,7 +640,29 @@
       rsvpEl.addEventListener('mouseleave',rR);
     }
     attachPressHold('btn-wish','rgba(201,168,76,.08)');
-    attachPressHold('btn-hantar','rgba(201,168,76,.08)');
+    // Hantar Ucapan — lock colour same as RSVP fix
+    const hantarEl = document.getElementById('btn-hantar');
+    if (hantarEl) {
+      hantarEl.style.transition = 'transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s ease';
+      function hantarPress() {
+        hantarEl.style.transform = 'scale(1.1)';
+        hantarEl.style.boxShadow = '0 0 28px rgba(201,168,76,0.5), 0 0 56px rgba(201,168,76,0.2)';
+        hantarEl.style.background = 'var(--navy)';
+        hantarEl.style.color = 'var(--gold)';
+      }
+      function hantarRelease() {
+        hantarEl.style.transform = 'scale(1)';
+        hantarEl.style.boxShadow = '';
+        hantarEl.style.background = 'var(--navy)';
+        hantarEl.style.color = 'var(--gold)';
+      }
+      hantarEl.addEventListener('touchstart',  hantarPress,   { passive: true });
+      hantarEl.addEventListener('touchend',    hantarRelease, { passive: true });
+      hantarEl.addEventListener('touchcancel', hantarRelease, { passive: true });
+      hantarEl.addEventListener('mousedown',   hantarPress);
+      hantarEl.addEventListener('mouseup',     hantarRelease);
+      hantarEl.addEventListener('mouseleave',  hantarRelease);
+    }
 
     /* Safety net */
     setTimeout(()=>{
