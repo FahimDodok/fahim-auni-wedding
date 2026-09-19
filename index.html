@@ -148,11 +148,15 @@
         #panel-backdrop{
             position:fixed;inset:0;z-index:8500;
             background:rgba(10,16,35,0);
+            backdrop-filter:blur(0px);
+            -webkit-backdrop-filter:blur(0px);
             pointer-events:none;
-            transition:background .3s ease;
+            transition:background .3s ease, backdrop-filter .3s ease;
         }
         #panel-backdrop.open{
-            background:rgba(10,16,35,.45);
+            background:rgba(10,16,35,.15);
+            backdrop-filter:blur(6px);
+            -webkit-backdrop-filter:blur(6px);
             pointer-events:all;
         }
         #float-panel{
@@ -443,7 +447,7 @@
   </div>
 
   <!-- ═══ FLOATING PANEL ═══ -->
-  <div id="panel-backdrop" onclick="closePanel()"></div>
+  <div id="panel-backdrop" id="panel-backdrop"></div>
   <div id="float-panel">
     <!-- Dot indicators -->
     <div class="panel-header">
@@ -695,9 +699,21 @@
       }
       positionPanel();
       goToSlide(slideIndex);
-      floatPanel.classList.add('open');
-      panelBackdrop.classList.add('open');
+      // If already open just switch slide, don't close/reopen
+      if(!floatPanel.classList.contains('open')){
+        floatPanel.classList.add('open');
+        panelBackdrop.classList.add('open');
+      }
     }
+
+    /* Backdrop click: close only if click is not on back-btn or float-bar */
+    panelBackdrop.addEventListener('click', e=>{
+      closePanel();
+    });
+    /* Prevent back-btn from closing panel */
+    document.getElementById('back-btn').addEventListener('click', e=>{
+      e.stopPropagation();
+    }, true);
 
     function closePanel(){
       floatPanel.classList.remove('open');
@@ -705,31 +721,80 @@
       document.querySelectorAll('.fbar-btn').forEach(b=>b.classList.remove('active'));
     }
 
-    /* Swipe between slides */
+    /* ── Live drag swipe between slides ── */
     (function(){
-      let startX=null, startY=null, isDragging=false;
-      floatPanel.addEventListener('touchstart',e=>{
-        startX=e.touches[0].clientX;
-        startY=e.touches[0].clientY;
-        isDragging=true;
+      let startX=null, startY=null, isDragging=false, trackWidth=0;
+
+      function getBaseOffset(){ return currentSlide * trackWidth; }
+
+      floatPanel.addEventListener('touchstart', e=>{
+        trackWidth = floatPanel.offsetWidth;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isDragging = false;
+        // Remove transition for live drag feel
+        panelTrack.style.transition = 'none';
       },{passive:true});
-      floatPanel.addEventListener('touchmove',e=>{
-        if(!isDragging||startX===null)return;
-        const dx=e.touches[0].clientX-startX;
-        const dy=e.touches[0].clientY-startY;
-        if(Math.abs(dy)>Math.abs(dx))return; // vertical scroll wins
+
+      floatPanel.addEventListener('touchmove', e=>{
+        if(startX===null) return;
+        const dx = e.touches[0].clientX - startX;
+        const dy = e.touches[0].clientY - startY;
+        // Only hijack horizontal swipe
+        if(!isDragging && Math.abs(dy) > Math.abs(dx)) { startX=null; return; }
+        isDragging = true;
         e.preventDefault();
+        // Resistance at ends
+        let offset = getBaseOffset() - dx;
+        const maxOffset = 2 * trackWidth;
+        if(offset < 0)         offset = offset * 0.25;      // resist past start
+        if(offset > maxOffset) offset = maxOffset + (offset - maxOffset) * 0.25; // resist past end
+        panelTrack.style.transform = 'translateX(-' + offset + 'px)';
       },{passive:false});
-      floatPanel.addEventListener('touchend',e=>{
-        if(!isDragging||startX===null)return;
-        isDragging=false;
-        const dx=e.changedTouches[0].clientX-startX;
-        const dy=e.changedTouches[0].clientY-startY;
-        if(Math.abs(dx)<30||Math.abs(dy)>Math.abs(dx))return;
-        if(dx<0) goToSlide(currentSlide+1); // swipe left → next
-        else     goToSlide(currentSlide-1); // swipe right → prev
-        startX=null;
+
+      floatPanel.addEventListener('touchend', e=>{
+        if(!isDragging || startX===null){ startX=null; return; }
+        const dx = e.changedTouches[0].clientX - startX;
+        startX = null; isDragging = false;
+        // Restore smooth transition
+        panelTrack.style.transition = 'transform .38s cubic-bezier(.25,.8,.25,1)';
+        const threshold = trackWidth * 0.28;
+        if(dx < -threshold)      goToSlide(currentSlide + 1);
+        else if(dx > threshold)  goToSlide(currentSlide - 1);
+        else                     goToSlide(currentSlide); // snap back
       },{passive:true});
+
+      /* Mouse drag (desktop) */
+      let mouseStartX=null, mouseDragging=false;
+      floatPanel.addEventListener('mousedown', e=>{
+        trackWidth = floatPanel.offsetWidth;
+        mouseStartX = e.clientX;
+        mouseDragging = false;
+        panelTrack.style.transition = 'none';
+      });
+      document.addEventListener('mousemove', e=>{
+        if(mouseStartX===null) return;
+        const dx = e.clientX - mouseStartX;
+        if(Math.abs(dx) > 4) mouseDragging = true;
+        if(!mouseDragging) return;
+        let offset = getBaseOffset() - dx;
+        const maxOffset = 2 * trackWidth;
+        if(offset < 0)         offset = offset * 0.25;
+        if(offset > maxOffset) offset = maxOffset + (offset - maxOffset) * 0.25;
+        panelTrack.style.transform = 'translateX(-' + offset + 'px)';
+      });
+      document.addEventListener('mouseup', e=>{
+        if(mouseStartX===null) return;
+        const dx = e.clientX - mouseStartX;
+        mouseStartX = null;
+        panelTrack.style.transition = 'transform .38s cubic-bezier(.25,.8,.25,1)';
+        if(!mouseDragging){ return; }
+        mouseDragging = false;
+        const threshold = trackWidth * 0.28;
+        if(dx < -threshold)      goToSlide(currentSlide + 1);
+        else if(dx > threshold)  goToSlide(currentSlide - 1);
+        else                     goToSlide(currentSlide);
+      });
     })();
 
     /* ── Countdown ── */
