@@ -71,6 +71,11 @@
         #back-btn:active{opacity:.7}
         #back-btn svg{width:16px;height:16px}
         #back-btn.visible{display:flex}
+        #back-btn.panel-open{
+            filter: blur(3px);
+            opacity: 0.3;
+            pointer-events: none;
+        }
 
         .timeline-dot{width:12px;height:12px;background:var(--gold);border-radius:50%;border:2px solid var(--ivory)}
         .petal{position:fixed;pointer-events:none;font-size:1.5rem;z-index:9999}
@@ -703,6 +708,7 @@
       if(!floatPanel.classList.contains('open')){
         floatPanel.classList.add('open');
         panelBackdrop.classList.add('open');
+        document.getElementById('back-btn').classList.add('panel-open');
       }
     }
 
@@ -710,15 +716,13 @@
     panelBackdrop.addEventListener('click', e=>{
       closePanel();
     });
-    /* Prevent back-btn from closing panel */
-    document.getElementById('back-btn').addEventListener('click', e=>{
-      e.stopPropagation();
-    }, true);
+
 
     function closePanel(){
       floatPanel.classList.remove('open');
       panelBackdrop.classList.remove('open');
       document.querySelectorAll('.fbar-btn').forEach(b=>b.classList.remove('active'));
+      document.getElementById('back-btn').classList.remove('panel-open');
     }
 
     /* ── Live drag swipe between slides ── */
