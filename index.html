@@ -190,14 +190,32 @@
         /* Panel header with dots */
         .panel-header{
             display:flex;align-items:center;justify-content:center;
-            padding:14px 20px 0;gap:6px;
+            padding:10px 20px 0;
         }
+        .panel-dots-row{
+            display:flex;align-items:center;justify-content:center;
+            gap:8px;
+            padding:6px 16px;
+            cursor:grab;
+            touch-action:none;
+            user-select:none;
+            -webkit-user-select:none;
+        }
+        .panel-dots-row:active{cursor:grabbing;}
         .panel-dot{
-            width:6px;height:6px;border-radius:50%;
+            width:7px;height:7px;border-radius:50%;
             background:rgba(201,168,76,.3);
-            transition:background .25s ease,transform .25s ease;
+            transition:background .25s ease,transform .25s ease,width .25s ease;
+            flex-shrink:0;
+            cursor:pointer;
+            -webkit-tap-highlight-color:transparent;
         }
-        .panel-dot.active{background:var(--gold);transform:scale(1.3)}
+        .panel-dot.active{
+            background:var(--gold);
+            transform:scale(1.3);
+            width:18px;
+            border-radius:4px;
+        }
 
         /* Panel slides viewport */
         .panel-track-wrap{overflow:hidden;width:100%}
@@ -460,9 +478,11 @@
   <div id="float-panel">
     <!-- Dot indicators -->
     <div class="panel-header">
-      <div class="panel-dot active" id="dot-0"></div>
-      <div class="panel-dot" id="dot-1"></div>
-      <div class="panel-dot" id="dot-2"></div>
+      <div class="panel-dots-row" id="dots-row">
+        <div class="panel-dot active" id="dot-0" onclick="goToSlide(0)"></div>
+        <div class="panel-dot" id="dot-1" onclick="goToSlide(1)"></div>
+        <div class="panel-dot" id="dot-2" onclick="goToSlide(2)"></div>
+      </div>
     </div>
     <!-- Slides -->
     <div class="panel-track-wrap">
@@ -825,6 +845,74 @@
         if(dx < -threshold)      goToSlide(currentSlide + 1);
         else if(dx > threshold)  goToSlide(currentSlide - 1);
         else                     goToSlide(currentSlide);
+      });
+    })();
+
+    /* ── Dot row drag scrubber ── */
+    (function(){
+      const dotsRow = document.getElementById('dots-row');
+      if(!dotsRow) return;
+      let startX = null, isDragging = false, startSlide = 0;
+
+      function onStart(x){
+        startX    = x;
+        startSlide= currentSlide;
+        isDragging= false;
+        panelTrack.style.transition = 'none';
+      }
+      function onMove(x){
+        if(startX === null) return;
+        const dx = x - startX;
+        if(Math.abs(dx) > 4) isDragging = true;
+        if(!isDragging) return;
+        // Every ~60px of drag = 1 slide
+        const slideDelta = Math.round(-dx / 60);
+        const targetSlide = Math.max(0, Math.min(2, startSlide + slideDelta));
+        // Move track live
+        const trackWidth = floatPanel.offsetWidth;
+        let offset = targetSlide * trackWidth;
+        panelTrack.style.transform = 'translateX(-' + offset + 'px)';
+        // Update dots live
+        dots.forEach((d,i) => d.classList.toggle('active', i === targetSlide));
+        // Update bar btns live
+        document.querySelectorAll('.fbar-btn').forEach(b=>{
+          b.classList.toggle('active', parseInt(b.dataset.panel) === targetSlide);
+        });
+      }
+      function onEnd(x){
+        if(startX === null){ startX=null; return; }
+        const dx = x - startX;
+        startX = null;
+        panelTrack.style.transition = 'transform .38s cubic-bezier(.25,.8,.25,1)';
+        if(!isDragging){ return; }
+        isDragging = false;
+        const slideDelta = Math.round(-dx / 60);
+        goToSlide(Math.max(0, Math.min(2, startSlide + slideDelta)));
+      }
+
+      // Touch
+      dotsRow.addEventListener('touchstart', e=>{
+        onStart(e.touches[0].clientX);
+        e.stopPropagation();
+      },{ passive:true });
+      dotsRow.addEventListener('touchmove', e=>{
+        onMove(e.touches[0].clientX);
+        if(isDragging) e.preventDefault();
+      },{ passive:false });
+      dotsRow.addEventListener('touchend', e=>{
+        onEnd(e.changedTouches[0].clientX);
+      },{ passive:true });
+
+      // Mouse
+      dotsRow.addEventListener('mousedown', e=>{
+        onStart(e.clientX);
+        e.stopPropagation();
+      });
+      document.addEventListener('mousemove', e=>{
+        if(startX !== null) onMove(e.clientX);
+      });
+      document.addEventListener('mouseup', e=>{
+        if(startX !== null) onEnd(e.clientX);
       });
     })();
 
