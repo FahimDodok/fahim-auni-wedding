@@ -411,7 +411,7 @@
         <input id="wish-name" type="text" placeholder="Nama anda..." maxlength="60">
         <textarea id="wish-text" rows="3" placeholder="Tulis ucapan di sini..." maxlength="200"></textarea>
       </div>
-      <button onclick="submitWish()" class="w-full mt-4 py-3 rounded-xl font-semibold text-sm uppercase tracking-widest transition hover:opacity-90" style="background:var(--navy);color:var(--gold);border:1px solid rgba(201,168,76,.4);">Hantar Ucapan</button>
+      <button id="btn-hantar" onclick="submitWish()" class="w-full mt-4 py-3 rounded-xl font-semibold text-sm uppercase tracking-widest" style="background:var(--navy);color:var(--gold);border:1px solid rgba(201,168,76,.4);">Hantar Ucapan</button>
       <button onclick="closeWishModal()" class="w-full mt-2 py-2 text-xs uppercase tracking-wider opacity-40 hover:opacity-70 transition" style="color:var(--navy);">Batal</button>
     </div>
   </div>
@@ -636,6 +636,7 @@
       rsvpEl.addEventListener('mouseleave',rR);
     }
     attachPressHold('btn-wish','rgba(201,168,76,.08)');
+    attachPressHold('btn-hantar','rgba(201,168,76,.08)');
 
     /* Safety net */
     setTimeout(()=>{
