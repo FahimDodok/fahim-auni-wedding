@@ -848,88 +848,102 @@
       });
     })();
 
-    /* ── Floating bar drag scrubber (absolute position based) ── */
+    /* ── Floating bar selector drag ── */
     (function(){
-      const bar = document.getElementById('float-bar');
-      if(!bar) return;
-      let startX = null, isDragging = false;
-      // Track cumulative offset from touch start, anchored to current slide
-      let anchorOffset = 0;
+      const bar  = document.getElementById('float-bar');
+      const btns = Array.from(bar.querySelectorAll('.fbar-btn'));
+      if(!bar || !btns.length) return;
 
-      function getSlideFromOffset(offset){
-        const trackWidth = floatPanel.offsetWidth || 300;
-        return Math.max(0, Math.min(2, Math.round(offset / trackWidth)));
-      }
+      let startX    = null;
+      let isDragging = false;
 
-      function onStart(x){
-        startX       = x;
-        isDragging   = false;
-        // Anchor starts from current slide's pixel offset
-        anchorOffset = currentSlide * (floatPanel.offsetWidth || 300);
-        panelTrack.style.transition = 'none';
-      }
-
-      function onMove(x){
-        if(startX === null) return;
-        const dx = x - startX;
-        if(Math.abs(dx) > 5) isDragging = true;
-        if(!isDragging) return;
-
-        const trackWidth = floatPanel.offsetWidth || 300;
-        // Move freely from anchor — drag left = higher offset (next slide)
-        let offset = anchorOffset - dx;
-        // Rubber band at ends
-        const maxOffset = 2 * trackWidth;
-        if(offset < 0)         offset = offset * 0.25;
-        if(offset > maxOffset) offset = maxOffset + (offset - maxOffset) * 0.25;
-
-        panelTrack.style.transform = 'translateX(-' + offset + 'px)';
-
-        // Live dot + bar update
-        const liveSlide = Math.max(0, Math.min(2, Math.round(offset / trackWidth)));
-        dots.forEach((d,i) => d.classList.toggle('active', i === liveSlide));
-        document.querySelectorAll('.fbar-btn').forEach(b=>{
-          b.classList.toggle('active', parseInt(b.dataset.panel) === liveSlide);
+      function getBtnCenters(){
+        const barRect = bar.getBoundingClientRect();
+        return btns.map(b => {
+          const r = b.getBoundingClientRect();
+          return r.left + r.width / 2 - barRect.left;
         });
       }
 
-      function onEnd(x){
-        if(startX === null) return;
-        const dx = x - startX;
-        startX = null;
-        panelTrack.style.transition = 'transform .38s cubic-bezier(.25,.8,.25,1)';
-        if(!isDragging){ isDragging = false; return; }
-        isDragging = false;
-        if(!floatPanel.classList.contains('open')) return;
-        const trackWidth = floatPanel.offsetWidth || 300;
-        const finalOffset = anchorOffset - dx;
-        goToSlide(Math.max(0, Math.min(2, Math.round(finalOffset / trackWidth))));
+      function getNearestBtn(relX){
+        const centers = getBtnCenters();
+        let nearest = 0, minDist = Infinity;
+        centers.forEach((cx, i) => {
+          const d = Math.abs(relX - cx);
+          if(d < minDist){ minDist = d; nearest = i; }
+        });
+        return nearest;
+      }
+
+      function highlightBtn(index){
+        btns.forEach((b, i) => b.classList.toggle('active', i === index));
+        dots.forEach((d, i) => d.classList.toggle('active', i === index));
       }
 
       // Touch
-      bar.addEventListener('touchstart', e=>{
+      bar.addEventListener('touchstart', e => {
         if(!floatPanel.classList.contains('open')) return;
-        onStart(e.touches[0].clientX);
-      },{ passive:true });
-      bar.addEventListener('touchmove', e=>{
-        if(!floatPanel.classList.contains('open')) return;
-        onMove(e.touches[0].clientX);
-        if(isDragging) e.preventDefault();
-      },{ passive:false });
-      bar.addEventListener('touchend', e=>{
-        onEnd(e.changedTouches[0].clientX);
-      },{ passive:true });
+        const barRect = bar.getBoundingClientRect();
+        startX     = e.touches[0].clientX;
+        isDragging = false;
+        // Highlight nearest immediately on touch
+        const relX = e.touches[0].clientX - barRect.left;
+        highlightBtn(getNearestBtn(relX));
+      }, { passive: true });
+
+      bar.addEventListener('touchmove', e => {
+        if(!floatPanel.classList.contains('open') || startX === null) return;
+        const dx = e.touches[0].clientX - startX;
+        if(Math.abs(dx) > 5) isDragging = true;
+        if(!isDragging) return;
+        e.preventDefault();
+        const barRect = bar.getBoundingClientRect();
+        const relX    = e.touches[0].clientX - barRect.left;
+        highlightBtn(getNearestBtn(relX));
+      }, { passive: false });
+
+      bar.addEventListener('touchend', e => {
+        if(startX === null) return;
+        startX = null;
+        // Switch panel to wherever selector landed
+        const activeIndex = btns.findIndex(b => b.classList.contains('active'));
+        if(activeIndex !== -1) {
+          // Switch slide without re-triggering bounce
+          panelTrack.style.transition = 'transform .38s cubic-bezier(.25,.8,.25,1)';
+          goToSlide(activeIndex);
+        }
+        isDragging = false;
+      }, { passive: true });
 
       // Mouse
-      bar.addEventListener('mousedown', e=>{
+      bar.addEventListener('mousedown', e => {
         if(!floatPanel.classList.contains('open')) return;
-        onStart(e.clientX);
+        const barRect = bar.getBoundingClientRect();
+        startX     = e.clientX;
+        isDragging = false;
+        const relX = e.clientX - barRect.left;
+        highlightBtn(getNearestBtn(relX));
       });
-      document.addEventListener('mousemove', e=>{
-        if(startX !== null && floatPanel.classList.contains('open')) onMove(e.clientX);
+
+      document.addEventListener('mousemove', e => {
+        if(startX === null || !floatPanel.classList.contains('open')) return;
+        const dx = e.clientX - startX;
+        if(Math.abs(dx) > 5) isDragging = true;
+        if(!isDragging) return;
+        const barRect = bar.getBoundingClientRect();
+        const relX    = e.clientX - barRect.left;
+        highlightBtn(getNearestBtn(relX));
       });
-      document.addEventListener('mouseup', e=>{
-        onEnd(e.clientX);
+
+      document.addEventListener('mouseup', e => {
+        if(startX === null) return;
+        startX = null;
+        const activeIndex = btns.findIndex(b => b.classList.contains('active'));
+        if(activeIndex !== -1){
+          panelTrack.style.transition = 'transform .38s cubic-bezier(.25,.8,.25,1)';
+          goToSlide(activeIndex);
+        }
+        isDragging = false;
       });
     })();
 
