@@ -848,45 +848,62 @@
       });
     })();
 
-    /* ── Floating bar drag scrubber ── */
+    /* ── Floating bar drag scrubber (absolute position based) ── */
     (function(){
       const bar = document.getElementById('float-bar');
       if(!bar) return;
-      let startX = null, isDragging = false, startSlide = 0;
+      let startX = null, isDragging = false;
+      // Track cumulative offset from touch start, anchored to current slide
+      let anchorOffset = 0;
+
+      function getSlideFromOffset(offset){
+        const trackWidth = floatPanel.offsetWidth || 300;
+        return Math.max(0, Math.min(2, Math.round(offset / trackWidth)));
+      }
 
       function onStart(x){
-        startX     = x;
-        startSlide = currentSlide;
-        isDragging = false;
+        startX       = x;
+        isDragging   = false;
+        // Anchor starts from current slide's pixel offset
+        anchorOffset = currentSlide * (floatPanel.offsetWidth || 300);
         panelTrack.style.transition = 'none';
       }
+
       function onMove(x){
         if(startX === null) return;
         const dx = x - startX;
-        if(Math.abs(dx) > 6) isDragging = true;
+        if(Math.abs(dx) > 5) isDragging = true;
         if(!isDragging) return;
-        // Every ~80px drag = 1 slide
-        const slideDelta = Math.round(dx / 80);
-        const target = Math.max(0, Math.min(2, startSlide + slideDelta));
-        const trackWidth = floatPanel.offsetWidth;
-        panelTrack.style.transform = 'translateX(-' + (target * trackWidth) + 'px)';
-        // Update dots + bar live
-        dots.forEach((d,i) => d.classList.toggle('active', i === target));
+
+        const trackWidth = floatPanel.offsetWidth || 300;
+        // Move freely from anchor — drag left = higher offset (next slide)
+        let offset = anchorOffset - dx;
+        // Rubber band at ends
+        const maxOffset = 2 * trackWidth;
+        if(offset < 0)         offset = offset * 0.25;
+        if(offset > maxOffset) offset = maxOffset + (offset - maxOffset) * 0.25;
+
+        panelTrack.style.transform = 'translateX(-' + offset + 'px)';
+
+        // Live dot + bar update
+        const liveSlide = Math.max(0, Math.min(2, Math.round(offset / trackWidth)));
+        dots.forEach((d,i) => d.classList.toggle('active', i === liveSlide));
         document.querySelectorAll('.fbar-btn').forEach(b=>{
-          b.classList.toggle('active', parseInt(b.dataset.panel) === target);
+          b.classList.toggle('active', parseInt(b.dataset.panel) === liveSlide);
         });
       }
+
       function onEnd(x){
         if(startX === null) return;
         const dx = x - startX;
         startX = null;
         panelTrack.style.transition = 'transform .38s cubic-bezier(.25,.8,.25,1)';
-        if(!isDragging){ isDragging=false; return; }
+        if(!isDragging){ isDragging = false; return; }
         isDragging = false;
-        // Only act if panel is open
         if(!floatPanel.classList.contains('open')) return;
-        const slideDelta = Math.round(dx / 80);
-        goToSlide(Math.max(0, Math.min(2, startSlide + slideDelta)));
+        const trackWidth = floatPanel.offsetWidth || 300;
+        const finalOffset = anchorOffset - dx;
+        goToSlide(Math.max(0, Math.min(2, Math.round(finalOffset / trackWidth))));
       }
 
       // Touch
