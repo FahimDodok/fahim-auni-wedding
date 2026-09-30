@@ -866,7 +866,7 @@
         if(Math.abs(dx) > 6) isDragging = true;
         if(!isDragging) return;
         // Every ~80px drag = 1 slide
-        const slideDelta = Math.round(-dx / 80);
+        const slideDelta = Math.round(dx / 80);
         const target = Math.max(0, Math.min(2, startSlide + slideDelta));
         const trackWidth = floatPanel.offsetWidth;
         panelTrack.style.transform = 'translateX(-' + (target * trackWidth) + 'px)';
@@ -885,7 +885,7 @@
         isDragging = false;
         // Only act if panel is open
         if(!floatPanel.classList.contains('open')) return;
-        const slideDelta = Math.round(-dx / 80);
+        const slideDelta = Math.round(dx / 80);
         goToSlide(Math.max(0, Math.min(2, startSlide + slideDelta)));
       }
 
