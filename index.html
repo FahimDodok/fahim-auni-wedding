@@ -146,9 +146,19 @@
         #float-bar.visible{opacity:1;transform:translateY(0);pointer-events:all}
 
         @keyframes fbarBounce{0%{transform:scale(1)}30%{transform:scale(.88)}60%{transform:scale(1.22)}80%{transform:scale(.95)}100%{transform:scale(1)}}
-        .fbar-btn{display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:6px 16px;border-radius:12px;transition:background .15s;-webkit-tap-highlight-color:transparent;position:relative}
-        .fbar-btn::before{content:'';position:absolute;inset:0;border-radius:12px;border:1.5px solid transparent;transition:border-color .2s ease,background .2s ease}
-        .fbar-btn.active::before{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.08)}
+        #float-bar { position: relative; }
+        /* Sliding pill selector */
+        #bar-pill {
+            position: absolute;
+            top: 6px; bottom: 6px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(201,168,76,.5);
+            background: rgba(201,168,76,.08);
+            pointer-events: none;
+            transition: left .28s cubic-bezier(.25,.8,.25,1), width .28s cubic-bezier(.25,.8,.25,1);
+            z-index: 0;
+        }
+        .fbar-btn{display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:6px 16px;border-radius:12px;transition:background .15s;-webkit-tap-highlight-color:transparent;position:relative;z-index:1}
         .fbar-btn.bounce{animation:fbarBounce .45s cubic-bezier(.36,.07,.19,.97)}
         .fbar-btn svg{width:22px;height:22px;stroke:var(--gold);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
         .fbar-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,168,76,.85);font-family:'Poppins',sans-serif}
@@ -459,6 +469,7 @@
 
   <!-- ═══ FLOATING BAR ═══ -->
   <div id="float-bar">
+    <div id="bar-pill"></div>
     <button class="fbar-btn" data-panel="0" onclick="openPanel(0,this)">
       <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       <span class="fbar-label">Contact</span>
@@ -736,10 +747,19 @@
       dots.forEach((d,idx)=>{
         d.classList.toggle('active', idx===currentSlide);
       });
-      // Highlight matching bar button
       document.querySelectorAll('.fbar-btn').forEach(b=>{
         b.classList.toggle('active', parseInt(b.dataset.panel)===currentSlide);
       });
+      // Smoothly move pill to active button
+      const activBtn = document.querySelector('.fbar-btn[data-panel="'+currentSlide+'"]');
+      const pill = document.getElementById('bar-pill');
+      if(activBtn && pill){
+        const barRect = document.getElementById('float-bar').getBoundingClientRect();
+        const btnRect = activBtn.getBoundingClientRect();
+        pill.style.transition = 'left .28s cubic-bezier(.25,.8,.25,1), width .28s cubic-bezier(.25,.8,.25,1)';
+        pill.style.left  = (btnRect.left - barRect.left) + 'px';
+        pill.style.width = btnRect.width + 'px';
+      }
     }
 
     function openPanel(slideIndex, btn){
@@ -875,10 +895,28 @@
         return nearest;
       }
 
-      function highlightBtn(index){
+      const pill = document.getElementById('bar-pill');
+
+      function movePill(index, animate){
+        const btn = btns[index];
+        if(!btn || !pill) return;
+        const barRect = bar.getBoundingClientRect();
+        const btnRect = btn.getBoundingClientRect();
+        pill.style.transition = animate
+          ? 'left .28s cubic-bezier(.25,.8,.25,1), width .28s cubic-bezier(.25,.8,.25,1)'
+          : 'none';
+        pill.style.left  = (btnRect.left - barRect.left) + 'px';
+        pill.style.width = btnRect.width + 'px';
+      }
+
+      function highlightBtn(index, animate){
         btns.forEach((b, i) => b.classList.toggle('active', i === index));
         dots.forEach((d, i) => d.classList.toggle('active', i === index));
+        movePill(index, animate !== false);
       }
+
+      // Init pill position once bar is visible
+      setTimeout(() => movePill(currentSlide, false), 100);
 
       // Touch
       bar.addEventListener('touchstart', e => {
@@ -899,7 +937,7 @@
         e.preventDefault();
         const barRect = bar.getBoundingClientRect();
         const relX    = e.touches[0].clientX - barRect.left;
-        highlightBtn(getNearestBtn(relX));
+        highlightBtn(getNearestBtn(relX), false);
       }, { passive: false });
 
       bar.addEventListener('touchend', e => {
@@ -932,7 +970,7 @@
         if(!isDragging) return;
         const barRect = bar.getBoundingClientRect();
         const relX    = e.clientX - barRect.left;
-        highlightBtn(getNearestBtn(relX));
+        highlightBtn(getNearestBtn(relX), false);
       });
 
       document.addEventListener('mouseup', e => {
