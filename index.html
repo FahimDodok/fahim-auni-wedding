@@ -146,29 +146,9 @@
         #float-bar.visible{opacity:1;transform:translateY(0);pointer-events:all}
 
         @keyframes fbarBounce{0%{transform:scale(1)}30%{transform:scale(.88)}60%{transform:scale(1.22)}80%{transform:scale(.95)}100%{transform:scale(1)}}
-        /* Sliding gold ring selector */
-        #bar-inner {
-            position: relative;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            width: 100%;
-        }
-        #bar-pill {
-            position: absolute;
-            top: 0; bottom: 0;
-            border-radius: 12px;
-            border: 1.5px solid rgba(201,168,76,.5);
-            background: rgba(201,168,76,.08);
-            pointer-events: none;
-            opacity: 0;
-            transition: left .28s cubic-bezier(.25,.8,.25,1),
-                        width .28s cubic-bezier(.25,.8,.25,1),
-                        opacity .2s ease;
-            z-index: 0;
-        }
-        #bar-pill.visible { opacity: 1; }
-        .fbar-btn{display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:6px 16px;border-radius:12px;transition:background .15s;-webkit-tap-highlight-color:transparent;position:relative;z-index:1}
+        .fbar-btn{display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:6px 16px;border-radius:12px;transition:background .15s;-webkit-tap-highlight-color:transparent;position:relative}
+        .fbar-btn::before{content:'';position:absolute;inset:0;border-radius:12px;border:1.5px solid transparent;transition:border-color .2s ease,background .2s ease}
+        .fbar-btn.active::before{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.08)}
         .fbar-btn.bounce{animation:fbarBounce .45s cubic-bezier(.36,.07,.19,.97)}
         .fbar-btn svg{width:22px;height:22px;stroke:var(--gold);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
         .fbar-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(201,168,76,.85);font-family:'Poppins',sans-serif}
@@ -479,21 +459,18 @@
 
   <!-- ═══ FLOATING BAR ═══ -->
   <div id="float-bar">
-    <div id="bar-inner">
-      <div id="bar-pill"></div>
-      <button class="fbar-btn" data-panel="0" onclick="openPanel(0,this)">
-        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span class="fbar-label">Contact</span>
-      </button>
-      <button class="fbar-btn" data-panel="1" onclick="openPanel(1,this)">
-        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
-        <span class="fbar-label">Location</span>
-      </button>
-      <button class="fbar-btn" data-panel="2" onclick="openPanel(2,this)">
-        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        <span class="fbar-label">Calendar</span>
-      </button>
-    </div>
+    <button class="fbar-btn" data-panel="0" onclick="openPanel(0,this)">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="fbar-label">Contact</span>
+    </button>
+    <button class="fbar-btn" data-panel="1" onclick="openPanel(1,this)">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      <span class="fbar-label">Location</span>
+    </button>
+    <button class="fbar-btn" data-panel="2" onclick="openPanel(2,this)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span class="fbar-label">Calendar</span>
+    </button>
   </div>
 
   <!-- ═══ FLOATING PANEL ═══ -->
@@ -759,11 +736,10 @@
       dots.forEach((d,idx)=>{
         d.classList.toggle('active', idx===currentSlide);
       });
+      // Highlight matching bar button
       document.querySelectorAll('.fbar-btn').forEach(b=>{
         b.classList.toggle('active', parseInt(b.dataset.panel)===currentSlide);
       });
-      // Smoothly move pill to active button
-      if(barPill && barPill.classList.contains('visible')) movePill(currentSlide, true);
     }
 
     function openPanel(slideIndex, btn){
@@ -780,8 +756,6 @@
         floatPanel.classList.add('open');
         panelBackdrop.classList.add('open');
         document.getElementById('back-btn').classList.add('panel-open');
-        // Show gold ring
-        setTimeout(()=>{ movePill(slideIndex, false); barPill.classList.add('visible'); }, 80);
       }
     }
 
@@ -796,8 +770,6 @@
       panelBackdrop.classList.remove('open');
       document.querySelectorAll('.fbar-btn').forEach(b=>b.classList.remove('active'));
       document.getElementById('back-btn').classList.remove('panel-open');
-      // Hide gold ring
-      if(barPill) barPill.classList.remove('visible');
     }
 
     /* ── Live drag swipe between slides ── */
@@ -876,99 +848,104 @@
       });
     })();
 
-    /* ── Gold ring globals ── */
-    const barPill  = document.getElementById('bar-pill');
-    const barInner = document.getElementById('bar-inner');
-    const barBtns  = Array.from(document.querySelectorAll('#bar-inner .fbar-btn'));
-
-    function movePill(index, animate) {
-      const btn = barBtns[index];
-      if (!btn || !barPill || !barInner) return;
-      const innerRect = barInner.getBoundingClientRect();
-      const btnRect   = btn.getBoundingClientRect();
-      barPill.style.transition = animate
-        ? 'left .28s cubic-bezier(.25,.8,.25,1), width .28s cubic-bezier(.25,.8,.25,1)'
-        : 'none';
-      barPill.style.left  = (btnRect.left - innerRect.left) + 'px';
-      barPill.style.width = btnRect.width + 'px';
-    }
-
-    function highlightBtn(index, animate) {
-      barBtns.forEach((b, i) => b.classList.toggle('active', i === index));
-      dots.forEach((d, i) => d.classList.toggle('active', i === index));
-      movePill(index, animate !== false);
-    }
-
     /* ── Floating bar selector drag ── */
     (function(){
-      const bar = document.getElementById('float-bar');
-      if (!bar) return;
-      let startX = null, isDragging = false;
+      const bar  = document.getElementById('float-bar');
+      const btns = Array.from(bar.querySelectorAll('.fbar-btn'));
+      if(!bar || !btns.length) return;
+
+      let startX    = null;
+      let isDragging = false;
 
       function getBtnCenters(){
-        return barBtns.map(b => {
+        const barRect = bar.getBoundingClientRect();
+        return btns.map(b => {
           const r = b.getBoundingClientRect();
-          const barRect = bar.getBoundingClientRect();
           return r.left + r.width / 2 - barRect.left;
         });
       }
+
       function getNearestBtn(relX){
         const centers = getBtnCenters();
         let nearest = 0, minDist = Infinity;
         centers.forEach((cx, i) => {
           const d = Math.abs(relX - cx);
-          if (d < minDist) { minDist = d; nearest = i; }
+          if(d < minDist){ minDist = d; nearest = i; }
         });
         return nearest;
       }
 
-      function onStart(x) {
-        startX = x; isDragging = false;
-        const barRect = bar.getBoundingClientRect();
-        highlightBtn(getNearestBtn(x - barRect.left), false);
-      }
-      function onMove(x) {
-        if (startX === null) return;
-        if (Math.abs(x - startX) > 5) isDragging = true;
-        if (!isDragging) return;
-        const barRect = bar.getBoundingClientRect();
-        highlightBtn(getNearestBtn(x - barRect.left), false);
-      }
-      function onEnd() {
-        if (startX === null) return;
-        startX = null;
-        if (!floatPanel.classList.contains('open')) return;
-        const activeIdx = barBtns.findIndex(b => b.classList.contains('active'));
-        if (activeIdx !== -1) {
-          panelTrack.style.transition = 'transform .38s cubic-bezier(.25,.8,.25,1)';
-          goToSlide(activeIdx);
-        }
-        isDragging = false;
+      function highlightBtn(index){
+        btns.forEach((b, i) => b.classList.toggle('active', i === index));
+        dots.forEach((d, i) => d.classList.toggle('active', i === index));
       }
 
+      // Touch
       bar.addEventListener('touchstart', e => {
-        if (!floatPanel.classList.contains('open')) return;
-        onStart(e.touches[0].clientX);
+        if(!floatPanel.classList.contains('open')) return;
+        const barRect = bar.getBoundingClientRect();
+        startX     = e.touches[0].clientX;
+        isDragging = false;
+        // Highlight nearest immediately on touch
+        const relX = e.touches[0].clientX - barRect.left;
+        highlightBtn(getNearestBtn(relX));
       }, { passive: true });
+
       bar.addEventListener('touchmove', e => {
-        if (!floatPanel.classList.contains('open') || startX === null) return;
-        if (Math.abs(e.touches[0].clientX - startX) > 5) isDragging = true;
-        if (!isDragging) return;
+        if(!floatPanel.classList.contains('open') || startX === null) return;
+        const dx = e.touches[0].clientX - startX;
+        if(Math.abs(dx) > 5) isDragging = true;
+        if(!isDragging) return;
         e.preventDefault();
         const barRect = bar.getBoundingClientRect();
-        highlightBtn(getNearestBtn(e.touches[0].clientX - barRect.left), false);
+        const relX    = e.touches[0].clientX - barRect.left;
+        highlightBtn(getNearestBtn(relX));
       }, { passive: false });
-      bar.addEventListener('touchend', e => { onEnd(); }, { passive: true });
 
+      bar.addEventListener('touchend', e => {
+        if(startX === null) return;
+        startX = null;
+        // Switch panel to wherever selector landed
+        const activeIndex = btns.findIndex(b => b.classList.contains('active'));
+        if(activeIndex !== -1) {
+          // Switch slide without re-triggering bounce
+          panelTrack.style.transition = 'transform .38s cubic-bezier(.25,.8,.25,1)';
+          goToSlide(activeIndex);
+        }
+        isDragging = false;
+      }, { passive: true });
+
+      // Mouse
       bar.addEventListener('mousedown', e => {
-        if (!floatPanel.classList.contains('open')) return;
-        onStart(e.clientX);
+        if(!floatPanel.classList.contains('open')) return;
+        const barRect = bar.getBoundingClientRect();
+        startX     = e.clientX;
+        isDragging = false;
+        const relX = e.clientX - barRect.left;
+        highlightBtn(getNearestBtn(relX));
       });
+
       document.addEventListener('mousemove', e => {
-        if (startX !== null && floatPanel.classList.contains('open')) onMove(e.clientX);
+        if(startX === null || !floatPanel.classList.contains('open')) return;
+        const dx = e.clientX - startX;
+        if(Math.abs(dx) > 5) isDragging = true;
+        if(!isDragging) return;
+        const barRect = bar.getBoundingClientRect();
+        const relX    = e.clientX - barRect.left;
+        highlightBtn(getNearestBtn(relX));
       });
-      document.addEventListener('mouseup', () => onEnd());
-    })()
+
+      document.addEventListener('mouseup', e => {
+        if(startX === null) return;
+        startX = null;
+        const activeIndex = btns.findIndex(b => b.classList.contains('active'));
+        if(activeIndex !== -1){
+          panelTrack.style.transition = 'transform .38s cubic-bezier(.25,.8,.25,1)';
+          goToSlide(activeIndex);
+        }
+        isDragging = false;
+      });
+    })();
 
     /* ── Dot row drag scrubber ── */
     (function(){
