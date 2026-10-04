@@ -763,16 +763,7 @@
         b.classList.toggle('active', parseInt(b.dataset.panel)===currentSlide);
       });
       // Smoothly move pill to active button
-      const activBtn = document.querySelector('.fbar-btn[data-panel="'+currentSlide+'"]');
-      const pill2 = document.getElementById('bar-pill');
-      const inner2 = document.getElementById('bar-inner');
-      if(activBtn && pill2 && inner2 && pill2.classList.contains('visible')){
-        const innerRect = inner2.getBoundingClientRect();
-        const btnRect   = activBtn.getBoundingClientRect();
-        pill2.style.transition = 'left .28s cubic-bezier(.25,.8,.25,1), width .28s cubic-bezier(.25,.8,.25,1)';
-        pill2.style.left  = (btnRect.left - innerRect.left) + 'px';
-        pill2.style.width = btnRect.width + 'px';
-      }
+      if(barPill && barPill.classList.contains('visible')) movePill(currentSlide, true);
     }
 
     function openPanel(slideIndex, btn){
@@ -790,7 +781,7 @@
         panelBackdrop.classList.add('open');
         document.getElementById('back-btn').classList.add('panel-open');
         // Show gold ring
-        setTimeout(()=>{ movePill(slideIndex, false); pill.classList.add('visible'); }, 50);
+        setTimeout(()=>{ movePill(slideIndex, false); barPill.classList.add('visible'); }, 80);
       }
     }
 
@@ -806,8 +797,7 @@
       document.querySelectorAll('.fbar-btn').forEach(b=>b.classList.remove('active'));
       document.getElementById('back-btn').classList.remove('panel-open');
       // Hide gold ring
-      const pill = document.getElementById('bar-pill');
-      if(pill) pill.classList.remove('visible');
+      if(barPill) barPill.classList.remove('visible');
     }
 
     /* ── Live drag swipe between slides ── */
@@ -886,123 +876,99 @@
       });
     })();
 
+    /* ── Gold ring globals ── */
+    const barPill  = document.getElementById('bar-pill');
+    const barInner = document.getElementById('bar-inner');
+    const barBtns  = Array.from(document.querySelectorAll('#bar-inner .fbar-btn'));
+
+    function movePill(index, animate) {
+      const btn = barBtns[index];
+      if (!btn || !barPill || !barInner) return;
+      const innerRect = barInner.getBoundingClientRect();
+      const btnRect   = btn.getBoundingClientRect();
+      barPill.style.transition = animate
+        ? 'left .28s cubic-bezier(.25,.8,.25,1), width .28s cubic-bezier(.25,.8,.25,1)'
+        : 'none';
+      barPill.style.left  = (btnRect.left - innerRect.left) + 'px';
+      barPill.style.width = btnRect.width + 'px';
+    }
+
+    function highlightBtn(index, animate) {
+      barBtns.forEach((b, i) => b.classList.toggle('active', i === index));
+      dots.forEach((d, i) => d.classList.toggle('active', i === index));
+      movePill(index, animate !== false);
+    }
+
     /* ── Floating bar selector drag ── */
     (function(){
-      const bar  = document.getElementById('float-bar');
-      const btns = Array.from(bar.querySelectorAll('.fbar-btn'));
-      if(!bar || !btns.length) return;
-
-      let startX    = null;
-      let isDragging = false;
+      const bar = document.getElementById('float-bar');
+      if (!bar) return;
+      let startX = null, isDragging = false;
 
       function getBtnCenters(){
-        const barRect = bar.getBoundingClientRect();
-        return btns.map(b => {
+        return barBtns.map(b => {
           const r = b.getBoundingClientRect();
+          const barRect = bar.getBoundingClientRect();
           return r.left + r.width / 2 - barRect.left;
         });
       }
-
       function getNearestBtn(relX){
         const centers = getBtnCenters();
         let nearest = 0, minDist = Infinity;
         centers.forEach((cx, i) => {
           const d = Math.abs(relX - cx);
-          if(d < minDist){ minDist = d; nearest = i; }
+          if (d < minDist) { minDist = d; nearest = i; }
         });
         return nearest;
       }
 
-      const pill = document.getElementById('bar-pill');
-
-      const barInner = document.getElementById('bar-inner');
-
-      function movePill(index, animate){
-        const btn = btns[index];
-        if(!btn || !pill || !barInner) return;
-        const innerRect = barInner.getBoundingClientRect();
-        const btnRect   = btn.getBoundingClientRect();
-        pill.style.transition = animate
-          ? 'left .28s cubic-bezier(.25,.8,.25,1), width .28s cubic-bezier(.25,.8,.25,1), opacity .2s ease'
-          : 'left 0s, width 0s, opacity .2s ease';
-        pill.style.left  = (btnRect.left - innerRect.left) + 'px';
-        pill.style.width = btnRect.width + 'px';
-      }
-
-      function highlightBtn(index, animate){
-        btns.forEach((b, i) => b.classList.toggle('active', i === index));
-        dots.forEach((d, i) => d.classList.toggle('active', i === index));
-        movePill(index, animate !== false);
-      }
-
-
-
-      // Touch
-      bar.addEventListener('touchstart', e => {
-        if(!floatPanel.classList.contains('open')) return;
+      function onStart(x) {
+        startX = x; isDragging = false;
         const barRect = bar.getBoundingClientRect();
-        startX     = e.touches[0].clientX;
+        highlightBtn(getNearestBtn(x - barRect.left), false);
+      }
+      function onMove(x) {
+        if (startX === null) return;
+        if (Math.abs(x - startX) > 5) isDragging = true;
+        if (!isDragging) return;
+        const barRect = bar.getBoundingClientRect();
+        highlightBtn(getNearestBtn(x - barRect.left), false);
+      }
+      function onEnd() {
+        if (startX === null) return;
+        startX = null;
+        if (!floatPanel.classList.contains('open')) return;
+        const activeIdx = barBtns.findIndex(b => b.classList.contains('active'));
+        if (activeIdx !== -1) {
+          panelTrack.style.transition = 'transform .38s cubic-bezier(.25,.8,.25,1)';
+          goToSlide(activeIdx);
+        }
         isDragging = false;
-        // Highlight nearest immediately on touch
-        const relX = e.touches[0].clientX - barRect.left;
-        highlightBtn(getNearestBtn(relX));
-      }, { passive: true });
+      }
 
+      bar.addEventListener('touchstart', e => {
+        if (!floatPanel.classList.contains('open')) return;
+        onStart(e.touches[0].clientX);
+      }, { passive: true });
       bar.addEventListener('touchmove', e => {
-        if(!floatPanel.classList.contains('open') || startX === null) return;
-        const dx = e.touches[0].clientX - startX;
-        if(Math.abs(dx) > 5) isDragging = true;
-        if(!isDragging) return;
+        if (!floatPanel.classList.contains('open') || startX === null) return;
+        if (Math.abs(e.touches[0].clientX - startX) > 5) isDragging = true;
+        if (!isDragging) return;
         e.preventDefault();
         const barRect = bar.getBoundingClientRect();
-        const relX    = e.touches[0].clientX - barRect.left;
-        highlightBtn(getNearestBtn(relX), false);
+        highlightBtn(getNearestBtn(e.touches[0].clientX - barRect.left), false);
       }, { passive: false });
+      bar.addEventListener('touchend', e => { onEnd(); }, { passive: true });
 
-      bar.addEventListener('touchend', e => {
-        if(startX === null) return;
-        startX = null;
-        // Switch panel to wherever selector landed
-        const activeIndex = btns.findIndex(b => b.classList.contains('active'));
-        if(activeIndex !== -1) {
-          // Switch slide without re-triggering bounce
-          panelTrack.style.transition = 'transform .38s cubic-bezier(.25,.8,.25,1)';
-          goToSlide(activeIndex);
-        }
-        isDragging = false;
-      }, { passive: true });
-
-      // Mouse
       bar.addEventListener('mousedown', e => {
-        if(!floatPanel.classList.contains('open')) return;
-        const barRect = bar.getBoundingClientRect();
-        startX     = e.clientX;
-        isDragging = false;
-        const relX = e.clientX - barRect.left;
-        highlightBtn(getNearestBtn(relX));
+        if (!floatPanel.classList.contains('open')) return;
+        onStart(e.clientX);
       });
-
       document.addEventListener('mousemove', e => {
-        if(startX === null || !floatPanel.classList.contains('open')) return;
-        const dx = e.clientX - startX;
-        if(Math.abs(dx) > 5) isDragging = true;
-        if(!isDragging) return;
-        const barRect = bar.getBoundingClientRect();
-        const relX    = e.clientX - barRect.left;
-        highlightBtn(getNearestBtn(relX), false);
+        if (startX !== null && floatPanel.classList.contains('open')) onMove(e.clientX);
       });
-
-      document.addEventListener('mouseup', e => {
-        if(startX === null) return;
-        startX = null;
-        const activeIndex = btns.findIndex(b => b.classList.contains('active'));
-        if(activeIndex !== -1){
-          panelTrack.style.transition = 'transform .38s cubic-bezier(.25,.8,.25,1)';
-          goToSlide(activeIndex);
-        }
-        isDragging = false;
-      });
-    })();
+      document.addEventListener('mouseup', () => onEnd());
+    })()
 
     /* ── Dot row drag scrubber ── */
     (function(){
