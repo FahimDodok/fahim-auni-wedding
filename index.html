@@ -38,9 +38,7 @@
         @keyframes shimmer{0%,100%{opacity:.8}50%{opacity:1.2}}
         @keyframes pulse-gold{0%,100%{box-shadow:0 0 20px rgba(201,168,76,.3)}50%{box-shadow:0 0 40px rgba(201,168,76,.6)}}
         @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-        @keyframes float-petal-1{0%{transform:translateX(-100px) translateY(0) rotate(0deg);opacity:1}100%{transform:translateX(100px) translateY(300px) rotate(360deg);opacity:0}}
-        @keyframes float-petal-2{0%{transform:translateX(50px) translateY(0) rotate(0deg);opacity:1}100%{transform:translateX(-150px) translateY(350px) rotate(-360deg);opacity:0}}
-        @keyframes float-petal-3{0%{transform:translateX(-50px) translateY(0) rotate(0deg);opacity:1}100%{transform:translateX(120px) translateY(320px) rotate(360deg);opacity:0}}
+
         @keyframes coverFadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
         .cover-child{opacity:0;animation:coverFadeIn 0.75s ease both;animation-fill-mode:forwards;animation-play-state:paused}
@@ -74,10 +72,7 @@
         #back-btn.panel-open{filter:blur(3px);opacity:0.3;pointer-events:none}
 
         .timeline-dot{width:12px;height:12px;background:var(--gold);border-radius:50%;border:2px solid var(--ivory)}
-        .petal{position:fixed;pointer-events:none;font-size:1.5rem;z-index:9999}
-        .petal-1{animation:float-petal-1 6s linear forwards}
-        .petal-2{animation:float-petal-2 7s linear forwards}
-        .petal-3{animation:float-petal-3 8s linear forwards}
+
 
         /* Music FAB */
         #music-fab{position:fixed;right:20px;top:70dvh;width:48px;height:48px;border-radius:50%;background:rgba(15,27,61,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid rgba(201,168,76,.55);box-shadow:0 4px 24px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;cursor:grab;z-index:10000;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;opacity:.45;transition:top .3s cubic-bezier(.25,.8,.25,1),left .3s cubic-bezier(.25,.8,.25,1),right .3s cubic-bezier(.25,.8,.25,1),box-shadow .2s ease,opacity .4s ease,transform .18s cubic-bezier(.34,1.56,.64,1)}
@@ -199,6 +194,19 @@
         .p-option:active{background:rgba(201,168,76,.15)}
         .p-option svg{width:18px;height:18px;flex-shrink:0;stroke:var(--gold);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
         .p-option span{font-size:13px;color:var(--ivory);font-family:'Poppins',sans-serif;letter-spacing:.02em}
+
+        /* ── Sparkles ── */
+        .sparkle{position:fixed;pointer-events:none;z-index:99998;animation:sparkleAnim var(--dur) ease-out var(--delay) both;}
+        .sparkle-star{width:var(--size);height:var(--size);position:relative;}
+        .sparkle-star::before,.sparkle-star::after{content:'';position:absolute;background:var(--color);border-radius:2px;}
+        .sparkle-star::before{width:100%;height:30%;top:35%;left:0;}
+        .sparkle-star::after{width:30%;height:100%;top:0;left:35%;}
+        .sparkle-diamond{width:var(--size);height:var(--size);background:var(--color);transform:rotate(45deg);border-radius:2px;}
+        .sparkle-dot{width:calc(var(--size)*0.5);height:calc(var(--size)*0.5);background:var(--color);border-radius:50%;}
+        @keyframes sparkleAnim{
+            0%{opacity:1;transform:translate(0,0) scale(1) rotate(var(--rot));}
+            100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0.2) rotate(calc(var(--rot) + 180deg));}
+        }
   </style>
 </head>
 <body class="w-full" style="background:rgb(253,248,240);">
@@ -484,16 +492,73 @@
       document.readyState==='complete'?hideLoader():window.addEventListener('load',hideLoader);
     })();
 
-    /* ── Petals ── */
+    /* ── Sparkles ── */
     (function(){
-      const p=['🌸','🌺','🦋'];
-      setInterval(()=>{
-        const el=document.createElement('div');
-        el.className='petal petal-'+((Math.random()*3|0)+1);
-        el.innerHTML=p[Math.random()*p.length|0];
-        el.style.left=Math.random()*100+'%';el.style.top='-20px';el.style.color='#c9a84c';
-        document.body.appendChild(el);setTimeout(()=>el.remove(),8000);
-      },2000);
+      const COLORS=['#c9a84c','#fdf8f0','#e8c97a','#fff8e7'];
+      const TYPES=['star','diamond','dot'];
+      function rand(a,b){return Math.random()*(b-a)+a;}
+
+      function spawnSparkles(x,y){
+        const count=Math.floor(rand(6,10));
+        for(let i=0;i<count;i++){
+          const type=TYPES[Math.floor(Math.random()*TYPES.length)];
+          const size=rand(6,14);
+          const angle=rand(0,Math.PI*2);
+          const dist=rand(35,80);
+          const color=COLORS[Math.floor(Math.random()*COLORS.length)];
+          const dur=rand(0.6,1.0);
+          const delay=rand(0,0.08);
+          const rot=rand(0,360);
+          const el=document.createElement('div');
+          el.className='sparkle';
+          el.style.cssText='left:'+(x-size/2)+'px;top:'+(y-size/2)+'px;--size:'+size+'px;--color:'+color+';--tx:'+(Math.cos(angle)*dist)+'px;--ty:'+(Math.sin(angle)*dist)+'px;--rot:'+rot+'deg;--dur:'+dur+'s;--delay:'+delay+'s;';
+          const inner=document.createElement('div');
+          inner.className='sparkle-'+type;
+          el.appendChild(inner);
+          document.body.appendChild(el);
+          setTimeout(()=>el.remove(),(dur+delay)*1000+100);
+        }
+      }
+
+      let holdTimer=null,isHolding=false,touchMoved=false,startX,startY;
+      let mouseHoldTimer=null,mouseHolding=false;
+
+      // Touch
+      document.addEventListener('touchstart',e=>{
+        isHolding=false;touchMoved=false;
+        startX=e.touches[0].clientX;startY=e.touches[0].clientY;
+        holdTimer=setTimeout(()=>{isHolding=true;},200);
+      },{passive:true});
+      document.addEventListener('touchmove',e=>{
+        const dx=Math.abs(e.touches[0].clientX-startX);
+        const dy=Math.abs(e.touches[0].clientY-startY);
+        if(dx>8||dy>8)touchMoved=true;
+      },{passive:true});
+      document.addEventListener('touchend',e=>{
+        clearTimeout(holdTimer);
+        if(!isHolding&&!touchMoved){
+          const t=e.changedTouches[0];
+          // Only spawn on page content, not interactive elements
+          const el=document.elementFromPoint(t.clientX,t.clientY);
+          if(el&&el.closest('#cover-screen, #invitation-content')){
+            spawnSparkles(t.clientX,t.clientY);
+          }
+        }
+        isHolding=false;touchMoved=false;
+      },{passive:true});
+
+      // Mouse
+      document.addEventListener('mousedown',()=>{mouseHolding=false;mouseHoldTimer=setTimeout(()=>{mouseHolding=true;},200);});
+      document.addEventListener('mouseup',e=>{
+        clearTimeout(mouseHoldTimer);
+        if(!mouseHolding){
+          const el=document.elementFromPoint(e.clientX,e.clientY);
+          if(el&&el.closest('#cover-screen, #invitation-content')){
+            spawnSparkles(e.clientX,e.clientY);
+          }
+        }
+        mouseHolding=false;
+      });
     })();
 
     /* ── Rubber band ── */
