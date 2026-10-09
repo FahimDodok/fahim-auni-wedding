@@ -207,9 +207,41 @@
             0%{opacity:1;transform:translate(0,0) scale(1) rotate(var(--rot));}
             100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0.2) rotate(calc(var(--rot) + 180deg));}
         }
+
+        /* ── Music indicator ── */
+        #music-indicator {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 99999;
+            padding: 14px 20px 36px;
+            background: linear-gradient(
+                to bottom,
+                rgba(0,0,0,0.72) 0%,
+                rgba(0,0,0,0.45) 40%,
+                rgba(0,0,0,0) 100%
+            );
+            display: flex;
+            align-items: flex-start;
+            gap: 7px;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(-6px);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+        #music-indicator.show { opacity:1; transform:translateY(0); }
+        #music-indicator .mi-icon { font-size:12px; color:rgba(255,255,255,0.65); flex-shrink:0; margin-top:1px; }
+        #music-indicator .mi-text { font-size:12px; color:rgba(255,255,255,0.85); letter-spacing:0.04em; }
+        #music-indicator .mi-text span { color:rgba(255,255,255,0.45); }
+
   </style>
 </head>
 <body class="w-full" style="background:rgb(253,248,240);">
+
+  <!-- Music indicator -->
+  <div id="music-indicator">
+    <span class="mi-icon" id="mi-icon">♪</span>
+    <span class="mi-text" id="mi-text">Risk It All <span>· Bruno Mars</span></span>
+  </div>
 
   <div id="loader">
     <div class="loader-icon">💍</div>
@@ -884,13 +916,31 @@
       }
       playChord();
     }
+    let miTimer = null;
+    function showMusicIndicator(playing){
+      const indicator = document.getElementById('music-indicator');
+      const icon = document.getElementById('mi-icon');
+      const text = document.getElementById('mi-text');
+      clearTimeout(miTimer);
+      if(playing){
+        icon.textContent = '♪';
+        text.innerHTML = 'Risk It All <span>· Bruno Mars</span>';
+      } else {
+        icon.textContent = '⏸';
+        text.innerHTML = '<span>Paused</span>';
+      }
+      indicator.classList.add('show');
+      miTimer = setTimeout(()=>indicator.classList.remove('show'), playing ? 3500 : 2000);
+    }
+
     function toggleMusic(){
       const hasSrc=bgAudio.querySelector('source')||bgAudio.src;
       isPlaying=!isPlaying;setFabState(isPlaying);
+      showMusicIndicator(isPlaying);
       if(isPlaying){hasSrc?bgAudio.play().catch(()=>{}):createRomanticMelody();}
       else{if(hasSrc)bgAudio.pause();else{oscillators.forEach(({osc,gain})=>{gain.gain.setTargetAtTime(0,audioCtx.currentTime,.5);setTimeout(()=>{try{osc.stop()}catch(e){}},600);});oscillators=[];}}
     }
-    bgAudio.addEventListener('ended',()=>{isPlaying=false;setFabState(false);});
+    bgAudio.addEventListener('ended',()=>{isPlaying=false;setFabState(false);showMusicIndicator(false);});
 
     /* ── Music FAB drag ── */
     (function(){
@@ -900,7 +950,7 @@
       function getTop(){return parseFloat(btn.style.top)||(window.innerHeight*.70);}
       function snapToSide(cx,cy){btn.classList.remove('dragging');btn.style.right='unset';btn.style.left=(cx+SIZE/2<window.innerWidth/2)?GAP+'px':(window.innerWidth-SIZE-GAP)+'px';btn.style.top=Math.max(GAP,Math.min(window.innerHeight-SIZE-GAP,cy))+'px';}
       function initPos(){if(btn.style.left)return;btn.style.left=(window.innerWidth-SIZE-20)+'px';btn.style.top=(window.innerHeight*.70)+'px';btn.style.right='unset';}
-      btn.addEventListener('touchstart',e=>{initPos();const t=e.touches[0];startX=t.clientX;startY=t.clientY;startLeft=getLeft();startTop=getTop();dragging=true;didMove=false;btn.classList.add('dragging','active');e.preventDefault();},{passive:false});
+      btn.addEventListener('touchstart',e=>{initPos();const t=e.touches[0];startX=t.clientX;startY=t.clientY;startLeft=getLeft();startTop=getTop();dragging=true;didMove=false;btn.classList.add('dragging','active');clearTimeout(miTimer);document.getElementById('music-indicator').classList.remove('show');e.preventDefault();},{passive:false});
       document.addEventListener('touchmove',e=>{if(!dragging)return;const t=e.touches[0];const dx=t.clientX-startX,dy=t.clientY-startY;if(Math.abs(dx)>5||Math.abs(dy)>5)didMove=true;btn.style.left=(startLeft+dx)+'px';btn.style.top=(startTop+dy)+'px';e.preventDefault();},{passive:false});
       document.addEventListener('touchend',e=>{if(!dragging)return;dragging=false;btn.classList.remove('dragging','active');const t=e.changedTouches[0];snapToSide(startLeft+(t.clientX-startX),startTop+(t.clientY-startY));if(!didMove)toggleMusic();e.preventDefault();},{passive:false});
       btn.addEventListener('mousedown',e=>{initPos();startX=e.clientX;startY=e.clientY;startLeft=getLeft();startTop=getTop();dragging=true;didMove=false;btn.classList.add('dragging','active');e.preventDefault();});
