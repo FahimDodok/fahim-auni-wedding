@@ -236,6 +236,33 @@
         #music-indicator .mi-text { font-size:12px; color:rgba(255,255,255,0.85); letter-spacing:0.04em; }
         #music-indicator .mi-text span { color:rgba(255,255,255,0.45); }
 
+
+        /* ── Hero page ── */
+        #hero-page {
+            position: fixed; inset: 0;
+            background-color: var(--navy);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 25;
+            transform: translateY(100%);
+            will-change: transform;
+        }
+        #hero-page.show { transform: translateY(0); transition: transform .6s cubic-bezier(.32,.72,0,1); }
+        #hero-page.exit { transform: translateY(-100%); transition: transform .5s cubic-bezier(.32,.72,0,1); }
+
+        .hero-child { opacity:0; animation:coverFadeIn .75s ease both; animation-play-state:paused; }
+        .hero-child.anim-ready { animation-play-state:running; }
+        .hero-d1{animation-delay:.1s}.hero-d2{animation-delay:.3s}.hero-d3{animation-delay:.5s}.hero-d4{animation-delay:.65s}
+
+        #hero-arrow {
+            position: absolute; bottom: 28px; left: 50%;
+            transform: translateX(-50%);
+            color: rgba(201,168,76,.35);
+            font-size: 22px;
+            animation: float 2s ease-in-out infinite;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
   </style>
 </head>
 <body class="w-full" style="background:rgb(253,248,240);">
@@ -273,6 +300,29 @@
               style="border-color:var(--gold);color:rgb(201,168,76);background:transparent;"
               onclick="openInvitation()">Buka Undangan</button>
     </div>
+  </section>
+
+
+  <!-- ═══ HERO PAGE ═══ -->
+  <section id="hero-page" class="pattern-bg">
+    <div class="absolute top-4 left-4  w-14 h-14 border-t-2 border-l-2 opacity-30" style="border-color:var(--gold);"></div>
+    <div class="absolute top-4 right-4 w-14 h-14 border-t-2 border-r-2 opacity-30" style="border-color:var(--gold);"></div>
+    <div class="absolute bottom-4 left-4  w-14 h-14 border-b-2 border-l-2 opacity-30" style="border-color:var(--gold);"></div>
+    <div class="absolute bottom-4 right-4 w-14 h-14 border-b-2 border-r-2 opacity-30" style="border-color:var(--gold);"></div>
+    <div class="text-center px-6 z-10">
+      <p class="hero-child hero-d1 uppercase tracking-[0.3em]" style="color:rgba(201,168,76,.6);font-size:11px;margin-bottom:32px;">Perkahwinan</p>
+      <div class="hero-child hero-d2">
+        <img src="fahim.png"     alt="Fahim" style="width:72%;max-width:260px;display:block;margin:0 auto 0 auto;margin-right:18%;">
+        <img src="ampersand.png" alt="&"     style="width:12%;max-width:44px;display:block;margin:-2px auto;">
+        <img src="auni.png"      alt="Auni"  style="width:62%;max-width:220px;display:block;margin:0 auto;margin-left:18%;">
+      </div>
+      <div class="hero-child hero-d3">
+        <div class="gold-divider w-28 mx-auto my-7"></div>
+        <p class="font-display font-normal" style="color:rgba(253,248,240,.7);font-size:14px;font-style:italic;letter-spacing:.06em;">Sabtu, 30 Januari 2027</p>
+        <p style="color:rgba(201,168,76,.55);font-size:12px;letter-spacing:.08em;margin-top:6px;">11 AM — 4 PM</p>
+      </div>
+    </div>
+    <div id="hero-arrow" class="hero-child hero-d4" onclick="openContent()">↓</div>
   </section>
 
   <button id="back-btn" onclick="goBack()">
@@ -656,24 +706,117 @@
 
     /* ── Open/Back ── */
     function openInvitation(){
-      document.getElementById('cover-screen').style.display='none';
+      // Show hero page first
+      const cover    = document.getElementById('cover-screen');
+      const heroPage = document.getElementById('hero-page');
+      cover.style.opacity    = '0';
+      cover.style.transition = 'opacity .45s ease';
+      cover.style.pointerEvents = 'none';
+      setTimeout(() => { cover.style.display = 'none'; }, 460);
+      heroPage.classList.add('show');
+      // Trigger hero animations
+      setTimeout(() => {
+        document.querySelectorAll('.hero-child').forEach(el => el.classList.add('anim-ready'));
+      }, 300);
+      initHeroSwipe();
+    }
+
+    function openContent(){
+      const heroPage = document.getElementById('hero-page');
+      const c        = document.getElementById('invitation-content');
+      heroPage.classList.add('exit');
+      setTimeout(() => { heroPage.style.display = 'none'; }, 520);
       window.scrollTo({top:0,behavior:'instant'});
       document.querySelectorAll('.scroll-fade').forEach(el=>{el.classList.remove('visible');observer.unobserve(el);});
-      const c=document.getElementById('invitation-content');
-      c.classList.add('revealed');c.classList.remove('animated');
+      c.classList.add('revealed'); c.classList.remove('animated');
       requestAnimationFrame(()=>requestAnimationFrame(()=>c.classList.add('animated')));
       document.getElementById('back-btn').classList.add('visible');
       document.getElementById('float-bar').classList.add('visible');
       startCountdown();
       setTimeout(()=>document.querySelectorAll('.scroll-fade').forEach(el=>observer.observe(el)),120);
     }
+
+    function initHeroSwipe(){
+      const hero = document.getElementById('hero-page');
+      let startY=null, isDragging=false;
+      let lastY=0, lastTime=0, velocity=0;
+      const THRESHOLD = window.innerHeight * 0.35;
+
+      function setTranslate(dy){
+        const val = dy > 0 ? dy * 0.15 : Math.min(0, dy);
+        hero.style.transition = 'none';
+        hero.style.transform  = 'translateY(' + val + 'px)';
+      }
+      function completeOpen(){
+        hero.style.transition = 'transform .4s cubic-bezier(.32,.72,0,1)';
+        hero.style.transform  = 'translateY(-100%)';
+        setTimeout(() => openContent(), 420);
+      }
+      function snapBack(){
+        hero.style.transition = 'transform .35s cubic-bezier(.32,.72,0,1)';
+        hero.style.transform  = 'translateY(0)';
+        setTimeout(() => { hero.style.transition=''; }, 360);
+      }
+
+      hero.addEventListener('touchstart', e=>{
+        startY=e.touches[0].clientY; lastY=startY; lastTime=Date.now();
+        isDragging=true; velocity=0;
+      },{ passive:true });
+      hero.addEventListener('touchmove', e=>{
+        if(!isDragging||startY===null) return;
+        const now=Date.now();
+        velocity=(e.touches[0].clientY-lastY)/(now-lastTime||1);
+        lastY=e.touches[0].clientY; lastTime=now;
+        setTranslate(e.touches[0].clientY-startY);
+      },{ passive:true });
+      hero.addEventListener('touchend', e=>{
+        if(!isDragging) return; isDragging=false;
+        const dy=e.changedTouches[0].clientY-startY; startY=null;
+        if(dy < -THRESHOLD || velocity < -0.5) completeOpen();
+        else snapBack();
+      },{ passive:true });
+
+      let mStartY=null, mDragging=false, mLastY=0, mLastTime=0, mVel=0;
+      hero.addEventListener('mousedown', e=>{
+        mStartY=e.clientY; mLastY=e.clientY; mLastTime=Date.now(); mDragging=true; mVel=0;
+      });
+      document.addEventListener('mousemove', e=>{
+        if(!mDragging||mStartY===null) return;
+        const now=Date.now();
+        mVel=(e.clientY-mLastY)/(now-mLastTime||1);
+        mLastY=e.clientY; mLastTime=now;
+        setTranslate(e.clientY-mStartY);
+      });
+      document.addEventListener('mouseup', e=>{
+        if(!mDragging) return; mDragging=false;
+        const dy=e.clientY-mStartY; mStartY=null;
+        if(dy < -THRESHOLD || mVel < -0.5) completeOpen();
+        else snapBack();
+      });
+      hero.addEventListener('wheel', e=>{ if(e.deltaY>30) completeOpen(); },{ passive:true });
+    }
     function goBack(){
       closePanel();
-      const c=document.getElementById('invitation-content');
+      const c        = document.getElementById('invitation-content');
+      const heroPage = document.getElementById('hero-page');
+      const cover    = document.getElementById('cover-screen');
+      // Hide content
       c.classList.remove('revealed','animated');
       document.getElementById('back-btn').classList.remove('visible');
       document.getElementById('float-bar').classList.remove('visible');
-      document.getElementById('cover-screen').style.display='';
+      // Hide hero
+      heroPage.style.display    = '';
+      heroPage.style.transform  = '';
+      heroPage.style.transition = '';
+      heroPage.classList.remove('show','exit');
+      // Reset hero animations so they replay
+      document.querySelectorAll('.hero-child').forEach(el => el.classList.remove('anim-ready'));
+      // Show cover
+      cover.style.display    = '';
+      cover.style.opacity    = '0';
+      cover.style.transition = 'opacity .4s ease';
+      cover.style.pointerEvents = '';
+      requestAnimationFrame(() => requestAnimationFrame(() => { cover.style.opacity = '1'; }));
       window.scrollTo({top:0,behavior:'instant'});
     }
 
