@@ -109,9 +109,31 @@
         #wish-toast .toast-msg{font-size:13px;font-weight:500;color:#fff;line-height:1.3;margin-top:1px}
 
         /* Wish ticker */
-        #wish-ticker{position:relative;min-height:100px;display:flex;align-items:center;justify-content:center}
-        .wish-card{position:absolute;width:100%;text-align:center;opacity:0;transform:translateY(10px);transition:opacity .8s ease,transform .8s ease;pointer-events:none}
-        .wish-card.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+        #wish-ticker{
+            position:relative;
+            min-height:100px;
+            overflow:hidden;
+            cursor:grab;
+            -webkit-tap-highlight-color:transparent;
+            touch-action:pan-y;
+        }
+        #wish-ticker.dragging{cursor:grabbing;}
+        .wish-track{
+            display:flex;
+            will-change:transform;
+            transition:transform .45s cubic-bezier(.25,.8,.25,1);
+        }
+        .wish-track.no-transition{transition:none;}
+        .wish-card{
+            flex-shrink:0;
+            width:100%;
+            text-align:center;
+            padding:0 8px;
+            opacity:0;
+            transition:opacity .5s ease;
+            pointer-events:none;
+        }
+        .wish-card.active{opacity:1;pointer-events:auto;}
 
         /* ── Floating bottom bar ── */
         #float-bar{
@@ -450,8 +472,8 @@
       <div class="max-w-lg mx-auto relative z-10">
         <p class="text-sm uppercase tracking-[0.3em] mb-3" style="color:var(--gold);font-size:14px;">Ucapan &amp; Doa</p>
         <p class="mb-8" style="color:rgba(253,248,240,.7);font-size:14px;">Titipkan ucapan dan doa kalian untuk kami</p>
-        <div id="wish-ticker" class="relative mb-8 px-4">
-          <p id="no-wishes-msg" class="font-caveat" style="color:rgba(253,248,240,.4);font-size:20px;">Belum ada ucapan lagi. Jadilah yang pertama! 🌸</p>
+        <div id="wish-ticker" class="mb-8" style="min-height:110px;">
+          <p id="no-wishes-msg" class="font-caveat" style="color:rgba(253,248,240,.4);font-size:20px;text-align:center;padding:20px 0;">Belum ada ucapan lagi. Jadilah yang pertama! 🌸</p>
         </div>
         <div class="gold-divider w-24 mx-auto mb-8"></div>
         <button id="btn-wish" onclick="openWishModal()" class="px-10 py-3 rounded-full text-sm uppercase tracking-[0.2em] font-semibold pulse-glow" style="background:transparent;border:1.5px solid var(--gold);color:var(--gold);">✦ Wish Here! ✦</button>
@@ -1108,8 +1130,14 @@
     const firebaseConfig={apiKey:"AIzaSyBKqiNmEAuxyYWtyqITZ0NSrEnzJIuO1_o",authDomain:"fahim-auni-wedding.firebaseapp.com",projectId:"fahim-auni-wedding",storageBucket:"fahim-auni-wedding.firebasestorage.app",messagingSenderId:"695568427433",appId:"1:695568427433:web:205578eccac0f5b2be3cb8",databaseURL:"https://fahim-auni-wedding-default-rtdb.asia-southeast1.firebasedatabase.app"};
     firebase.initializeApp(firebaseConfig);
     const db=firebase.database();const wishesRef=db.ref('wishes');
-    let wishes=[],tickerIndex=0,tickerTimer=null;
-    wishesRef.on('value',snapshot=>{wishes=[];snapshot.forEach(child=>wishes.push(child.val()));tickerIndex=0;renderTicker();});
+    let wishes=[],tickerIndex=0,tickerTimer=null,userInteracting=false,resumeTimer=null;
+    wishesRef.on('value',snapshot=>{
+      wishes=[];
+      // Latest first
+      const arr=[];snapshot.forEach(child=>arr.push(child.val()));
+      wishes=arr.reverse();
+      tickerIndex=0;renderTicker();
+    });
 
     function openWishModal(){document.getElementById('wish-overlay').classList.add('open');document.body.style.overflow='hidden';}
     function closeWishModal(){document.getElementById('wish-overlay').classList.remove('open');document.body.style.overflow='';}
@@ -1120,21 +1148,139 @@
       wishesRef.push({name,text,timestamp:Date.now()}).then(()=>{document.getElementById('wish-name').value='';document.getElementById('wish-text').value='';closeWishModal();showToast();}).catch(err=>{console.error(err);alert('Ralat menghantar ucapan. Sila cuba lagi.');});
     }
     function showToast(){const t=document.getElementById('wish-toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
     function renderTicker(){
-      const ticker=document.getElementById('wish-ticker');const noMsg=document.getElementById('no-wishes-msg');
-      if(wishes.length===0){if(noMsg)noMsg.style.display='';stopTicker();ticker.querySelectorAll('.wish-card').forEach(c=>c.remove());return;}
+      const ticker=document.getElementById('wish-ticker');
+      const noMsg=document.getElementById('no-wishes-msg');
+      if(wishes.length===0){
+        if(noMsg)noMsg.style.display='';
+        stopTicker();
+        ticker.innerHTML='<p id="no-wishes-msg" class="font-caveat" style="color:rgba(253,248,240,.4);font-size:20px;text-align:center;padding:20px 0;">Belum ada ucapan lagi. Jadilah yang pertama! 🌸</p>';
+        return;
+      }
       if(noMsg)noMsg.style.display='none';
-      ticker.querySelectorAll('.wish-card').forEach(c=>c.remove());tickerIndex=0;
-      wishes.forEach((w,i)=>{const card=document.createElement('div');card.className='wish-card'+(i===0?' visible':'');card.innerHTML='<p class="font-caveat" style="color:var(--ivory);font-size:24px;line-height:1.4;">"'+w.text+'"</p><p class="mt-2 font-caveat" style="color:var(--gold);font-size:18px;">— '+w.name+'</p>';ticker.appendChild(card);});
-      stopTicker();if(wishes.length>1)startTicker();
+
+      // Build track + cards
+      let trackEl=ticker.querySelector('.wish-track');
+      if(!trackEl){
+        trackEl=document.createElement('div');
+        trackEl.className='wish-track';
+        ticker.innerHTML='';
+        ticker.appendChild(trackEl);
+      } else {
+        trackEl.innerHTML='';
+      }
+
+      wishes.forEach((w,i)=>{
+        const card=document.createElement('div');
+        card.className='wish-card'+(i===tickerIndex?' active':'');
+        card.innerHTML='<p class="font-caveat" style="color:var(--ivory);font-size:24px;line-height:1.4;">"'+w.text+'"</p><p class="mt-2 font-caveat" style="color:var(--gold);font-size:18px;">— '+w.name+'</p>';
+        trackEl.appendChild(card);
+      });
+
+      setTrackPos(tickerIndex, false);
+      stopTicker();
+      if(wishes.length>1) startTicker();
+      initWishSwipe();
     }
+
+    function setTrackPos(index, animate){
+      const ticker=document.getElementById('wish-ticker');
+      const track=ticker.querySelector('.wish-track');
+      if(!track)return;
+      const w=ticker.offsetWidth||300;
+      if(!animate) track.classList.add('no-transition');
+      else track.classList.remove('no-transition');
+      track.style.transform='translateX(-'+(index*w)+'px)';
+      // Update active card
+      track.querySelectorAll('.wish-card').forEach((c,i)=>c.classList.toggle('active',i===index));
+    }
+
+    function goToWish(index){
+      tickerIndex=Math.max(0,Math.min(wishes.length-1,index));
+      setTrackPos(tickerIndex,true);
+    }
+
     function stopTicker(){if(tickerTimer){clearInterval(tickerTimer);tickerTimer=null;}}
     function startTicker(){
       tickerTimer=setInterval(()=>{
-        const cards=document.querySelectorAll('#wish-ticker .wish-card');if(!cards.length)return;
-        cards[tickerIndex].classList.remove('visible');const next=(tickerIndex+1)%cards.length;
-        setTimeout(()=>{tickerIndex=next;cards[tickerIndex].classList.add('visible');},800);
+        if(userInteracting)return;
+        const next=(tickerIndex+1)%wishes.length;
+        goToWish(next);
       },3800);
+    }
+
+    /* ── Wish swipe ── */
+    function initWishSwipe(){
+      const ticker=document.getElementById('wish-ticker');
+      // Remove old listeners by cloning
+      const newTicker=ticker.cloneNode(true);
+      ticker.parentNode.replaceChild(newTicker,ticker);
+      const t=document.getElementById('wish-ticker');
+      // Re-attach track ref
+      let startX=null,startY=null,isDragging=false,lastX=0,velocity=0,lastTime=0;
+      const SLIGHT=30; // px threshold for slight swipe
+
+      function onStart(x,y){
+        startX=x;startY=y;lastX=x;lastTime=Date.now();
+        isDragging=false;velocity=0;
+        userInteracting=true;
+        clearTimeout(resumeTimer);
+        const track=t.querySelector('.wish-track');
+        if(track)track.classList.add('no-transition');
+      }
+      function onMove(x,y){
+        if(startX===null)return;
+        const dx=x-startX,dy=y-startY;
+        if(!isDragging){
+          if(Math.abs(dy)>Math.abs(dx)){startX=null;return;} // vertical scroll wins
+          if(Math.abs(dx)>5)isDragging=true;
+        }
+        if(!isDragging)return;
+        const now=Date.now();
+        velocity=(x-lastX)/(now-lastTime||1);
+        lastX=x;lastTime=now;
+        // Live follow
+        const w=t.offsetWidth||300;
+        const track=t.querySelector('.wish-track');
+        if(!track)return;
+        let offset=tickerIndex*w-dx;
+        // Rubber band at ends
+        if(offset<0)          offset=offset*0.2;
+        if(offset>(wishes.length-1)*w) offset=(wishes.length-1)*w+((offset-(wishes.length-1)*w)*0.2);
+        track.style.transform='translateX(-'+offset+'px)';
+      }
+      function onEnd(x){
+        if(startX===null)return;
+        const dx=x-startX;
+        startX=null;
+        const track=t.querySelector('.wish-track');
+        if(track)track.classList.remove('no-transition');
+        if(!isDragging){userInteracting=false;return;}
+        isDragging=false;
+        // Slight swipe OR fast flick
+        if(Math.abs(dx)>SLIGHT||Math.abs(velocity)>0.4){
+          if(dx<0)goToWish(tickerIndex+1);
+          else     goToWish(tickerIndex-1);
+        } else {
+          goToWish(tickerIndex); // snap back
+        }
+        // Resume auto after 5s of inactivity
+        resumeTimer=setTimeout(()=>{userInteracting=false;},5000);
+      }
+
+      // Touch
+      t.addEventListener('touchstart',e=>{onStart(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+      t.addEventListener('touchmove',e=>{
+        onMove(e.touches[0].clientX,e.touches[0].clientY);
+        if(isDragging)e.preventDefault();
+      },{passive:false});
+      t.addEventListener('touchend',e=>{onEnd(e.changedTouches[0].clientX);},{passive:true});
+
+      // Mouse
+      t.addEventListener('mousedown',e=>{onStart(e.clientX,e.clientY);t.classList.add('dragging');});
+      document.addEventListener('mousemove',e=>{if(startX!==null)onMove(e.clientX,e.clientY);});
+      document.addEventListener('mouseup',e=>{if(startX!==null){onEnd(e.clientX);t.classList.remove('dragging');}});
     }
 
     const observer=new IntersectionObserver(entries=>{
