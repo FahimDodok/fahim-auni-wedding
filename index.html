@@ -1131,68 +1131,77 @@
     firebase.initializeApp(firebaseConfig);
     const db=firebase.database();const wishesRef=db.ref('wishes');
     let wishes=[],tickerIndex=0,tickerTimer=null,userInteracting=false,resumeTimer=null;
+    let swipeInitialized=false;
+
     wishesRef.on('value',snapshot=>{
-      wishes=[];
-      // Latest first
       const arr=[];snapshot.forEach(child=>arr.push(child.val()));
-      wishes=arr.reverse();
-      tickerIndex=0;renderTicker();
+      wishes=arr.reverse(); // latest first
+      tickerIndex=0;
+      renderTicker();
     });
 
     function openWishModal(){document.getElementById('wish-overlay').classList.add('open');document.body.style.overflow='hidden';}
     function closeWishModal(){document.getElementById('wish-overlay').classList.remove('open');document.body.style.overflow='';}
     function handleOverlayClick(e){if(e.target===document.getElementById('wish-overlay'))closeWishModal();}
     function submitWish(){
-      const name=document.getElementById('wish-name').value.trim();const text=document.getElementById('wish-text').value.trim();
+      const name=document.getElementById('wish-name').value.trim();
+      const text=document.getElementById('wish-text').value.trim();
       if(!name||!text){const m=!name?document.getElementById('wish-name'):document.getElementById('wish-text');m.style.borderColor='#e57373';setTimeout(()=>m.style.borderColor='',1200);return;}
-      wishesRef.push({name,text,timestamp:Date.now()}).then(()=>{document.getElementById('wish-name').value='';document.getElementById('wish-text').value='';closeWishModal();showToast();}).catch(err=>{console.error(err);alert('Ralat menghantar ucapan. Sila cuba lagi.');});
+      wishesRef.push({name,text,timestamp:Date.now()})
+        .then(()=>{document.getElementById('wish-name').value='';document.getElementById('wish-text').value='';closeWishModal();showToast();})
+        .catch(err=>{console.error(err);alert('Ralat menghantar ucapan. Sila cuba lagi.');});
     }
     function showToast(){const t=document.getElementById('wish-toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 
-    function renderTicker(){
-      const ticker=document.getElementById('wish-ticker');
-      const noMsg=document.getElementById('no-wishes-msg');
-      if(wishes.length===0){
-        if(noMsg)noMsg.style.display='';
-        stopTicker();
-        ticker.innerHTML='<p id="no-wishes-msg" class="font-caveat" style="color:rgba(253,248,240,.4);font-size:20px;text-align:center;padding:20px 0;">Belum ada ucapan lagi. Jadilah yang pertama! 🌸</p>';
-        return;
-      }
-      if(noMsg)noMsg.style.display='none';
-
-      // Build track + cards
-      let trackEl=ticker.querySelector('.wish-track');
-      if(!trackEl){
-        trackEl=document.createElement('div');
-        trackEl.className='wish-track';
-        ticker.innerHTML='';
-        ticker.appendChild(trackEl);
-      } else {
-        trackEl.innerHTML='';
-      }
-
-      wishes.forEach((w,i)=>{
-        const card=document.createElement('div');
-        card.className='wish-card'+(i===tickerIndex?' active':'');
-        card.innerHTML='<p class="font-caveat" style="color:var(--ivory);font-size:24px;line-height:1.4;">"'+w.text+'"</p><p class="mt-2 font-caveat" style="color:var(--gold);font-size:18px;">— '+w.name+'</p>';
-        trackEl.appendChild(card);
-      });
-
-      setTrackPos(tickerIndex, false);
-      stopTicker();
-      if(wishes.length>1) startTicker();
-      initWishSwipe();
+    function getTickerWidth(){
+      return document.getElementById('wish-ticker').offsetWidth||300;
     }
 
-    function setTrackPos(index, animate){
+    function renderTicker(){
+      const ticker=document.getElementById('wish-ticker');
+      stopTicker();
+
+      if(wishes.length===0){
+        ticker.innerHTML='<p id="no-wishes-msg" class="font-caveat" style="color:rgba(253,248,240,.4);font-size:20px;text-align:center;padding:20px 8px;">Belum ada ucapan lagi. Jadilah yang pertama! 🌸</p>';
+        swipeInitialized=false;
+        return;
+      }
+
+      // Rebuild track
+      ticker.innerHTML='';
+      const track=document.createElement('div');
+      track.className='wish-track';
+      wishes.forEach((w,i)=>{
+        const card=document.createElement('div');
+        card.className='wish-card'+(i===0?' active':'');
+        card.innerHTML='<p class="font-caveat" style="color:var(--ivory);font-size:24px;line-height:1.4;">"'+w.text+'"</p><p class="mt-2 font-caveat" style="color:var(--gold);font-size:18px;">— '+w.name+'</p>';
+        track.appendChild(card);
+      });
+      ticker.appendChild(track);
+
+      // Set initial position without animation
+      requestAnimationFrame(()=>{
+        track.classList.add('no-transition');
+        track.style.transform='translateX(0)';
+        tickerIndex=0;
+        requestAnimationFrame(()=>{
+          track.classList.remove('no-transition');
+          if(wishes.length>1){ startTicker(); }
+          if(!swipeInitialized){ initWishSwipe(); swipeInitialized=true; }
+        });
+      });
+    }
+
+    function setTrackPos(index,animate){
       const ticker=document.getElementById('wish-ticker');
       const track=ticker.querySelector('.wish-track');
       if(!track)return;
-      const w=ticker.offsetWidth||300;
-      if(!animate) track.classList.add('no-transition');
-      else track.classList.remove('no-transition');
+      const w=getTickerWidth();
+      if(!animate){
+        track.classList.add('no-transition');
+        requestAnimationFrame(()=>track.classList.remove('no-transition'));
+      }
       track.style.transform='translateX(-'+(index*w)+'px)';
-      // Update active card
       track.querySelectorAll('.wish-card').forEach((c,i)=>c.classList.toggle('active',i===index));
     }
 
@@ -1204,83 +1213,70 @@
     function stopTicker(){if(tickerTimer){clearInterval(tickerTimer);tickerTimer=null;}}
     function startTicker(){
       tickerTimer=setInterval(()=>{
-        if(userInteracting)return;
-        const next=(tickerIndex+1)%wishes.length;
-        goToWish(next);
+        if(userInteracting||wishes.length<2)return;
+        goToWish((tickerIndex+1)%wishes.length);
       },3800);
     }
 
-    /* ── Wish swipe ── */
+    /* ── Wish swipe — attached once, always reads live DOM ── */
     function initWishSwipe(){
       const ticker=document.getElementById('wish-ticker');
-      // Remove old listeners by cloning
-      const newTicker=ticker.cloneNode(true);
-      ticker.parentNode.replaceChild(newTicker,ticker);
-      const t=document.getElementById('wish-ticker');
-      // Re-attach track ref
       let startX=null,startY=null,isDragging=false,lastX=0,velocity=0,lastTime=0;
-      const SLIGHT=30; // px threshold for slight swipe
 
       function onStart(x,y){
+        const track=document.querySelector('#wish-ticker .wish-track');
+        if(!track)return;
         startX=x;startY=y;lastX=x;lastTime=Date.now();
         isDragging=false;velocity=0;
         userInteracting=true;
         clearTimeout(resumeTimer);
-        const track=t.querySelector('.wish-track');
-        if(track)track.classList.add('no-transition');
+        track.classList.add('no-transition');
       }
       function onMove(x,y){
         if(startX===null)return;
         const dx=x-startX,dy=y-startY;
         if(!isDragging){
-          if(Math.abs(dy)>Math.abs(dx)){startX=null;return;} // vertical scroll wins
+          if(Math.abs(dy)>Math.abs(dx)+3){startX=null;return;}
           if(Math.abs(dx)>5)isDragging=true;
         }
         if(!isDragging)return;
         const now=Date.now();
         velocity=(x-lastX)/(now-lastTime||1);
         lastX=x;lastTime=now;
-        // Live follow
-        const w=t.offsetWidth||300;
-        const track=t.querySelector('.wish-track');
+        const track=document.querySelector('#wish-ticker .wish-track');
         if(!track)return;
+        const w=getTickerWidth();
         let offset=tickerIndex*w-dx;
-        // Rubber band at ends
-        if(offset<0)          offset=offset*0.2;
-        if(offset>(wishes.length-1)*w) offset=(wishes.length-1)*w+((offset-(wishes.length-1)*w)*0.2);
+        const maxOffset=(wishes.length-1)*w;
+        if(offset<0)offset=offset*0.2;
+        if(offset>maxOffset)offset=maxOffset+(offset-maxOffset)*0.2;
         track.style.transform='translateX(-'+offset+'px)';
       }
       function onEnd(x){
         if(startX===null)return;
         const dx=x-startX;
         startX=null;
-        const track=t.querySelector('.wish-track');
+        const track=document.querySelector('#wish-ticker .wish-track');
         if(track)track.classList.remove('no-transition');
         if(!isDragging){userInteracting=false;return;}
         isDragging=false;
-        // Slight swipe OR fast flick
-        if(Math.abs(dx)>SLIGHT||Math.abs(velocity)>0.4){
-          if(dx<0)goToWish(tickerIndex+1);
-          else     goToWish(tickerIndex-1);
+        if(Math.abs(dx)>30||Math.abs(velocity)>0.4){
+          goToWish(dx<0?tickerIndex+1:tickerIndex-1);
         } else {
-          goToWish(tickerIndex); // snap back
+          goToWish(tickerIndex);
         }
-        // Resume auto after 5s of inactivity
         resumeTimer=setTimeout(()=>{userInteracting=false;},5000);
       }
 
-      // Touch
-      t.addEventListener('touchstart',e=>{onStart(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
-      t.addEventListener('touchmove',e=>{
+      ticker.addEventListener('touchstart',e=>{onStart(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+      ticker.addEventListener('touchmove',e=>{
         onMove(e.touches[0].clientX,e.touches[0].clientY);
         if(isDragging)e.preventDefault();
       },{passive:false});
-      t.addEventListener('touchend',e=>{onEnd(e.changedTouches[0].clientX);},{passive:true});
-
-      // Mouse
-      t.addEventListener('mousedown',e=>{onStart(e.clientX,e.clientY);t.classList.add('dragging');});
+      ticker.addEventListener('touchend',e=>{onEnd(e.changedTouches[0].clientX);},{passive:true});
+      ticker.addEventListener('mousedown',e=>{onStart(e.clientX,e.clientY);ticker.classList.add('dragging');});
       document.addEventListener('mousemove',e=>{if(startX!==null)onMove(e.clientX,e.clientY);});
-      document.addEventListener('mouseup',e=>{if(startX!==null){onEnd(e.clientX);t.classList.remove('dragging');}});
+      document.addEventListener('mouseup',e=>{if(startX!==null){onEnd(e.clientX);ticker.classList.remove('dragging');}});
     }
 
     const observer=new IntersectionObserver(entries=>{
