@@ -1108,62 +1108,31 @@
     const firebaseConfig={apiKey:"AIzaSyBKqiNmEAuxyYWtyqITZ0NSrEnzJIuO1_o",authDomain:"fahim-auni-wedding.firebaseapp.com",projectId:"fahim-auni-wedding",storageBucket:"fahim-auni-wedding.firebasestorage.app",messagingSenderId:"695568427433",appId:"1:695568427433:web:205578eccac0f5b2be3cb8",databaseURL:"https://fahim-auni-wedding-default-rtdb.asia-southeast1.firebasedatabase.app"};
     firebase.initializeApp(firebaseConfig);
     const db=firebase.database();const wishesRef=db.ref('wishes');
-    /* ── Wishes ── */
     let wishes=[],tickerIndex=0,tickerTimer=null;
-    wishesRef.on('value',snapshot=>{
-      wishes=[];
-      snapshot.forEach(child=>wishes.push(child.val()));
-      tickerIndex=0;
-      renderTicker();
-    });
+    wishesRef.on('value',snapshot=>{wishes=[];snapshot.forEach(child=>wishes.push(child.val()));tickerIndex=0;renderTicker();});
 
     function openWishModal(){document.getElementById('wish-overlay').classList.add('open');document.body.style.overflow='hidden';}
     function closeWishModal(){document.getElementById('wish-overlay').classList.remove('open');document.body.style.overflow='';}
     function handleOverlayClick(e){if(e.target===document.getElementById('wish-overlay'))closeWishModal();}
-
     function submitWish(){
-      const name=document.getElementById('wish-name').value.trim();
-      const text=document.getElementById('wish-text').value.trim();
-      if(!name||!text){
-        const m=!name?document.getElementById('wish-name'):document.getElementById('wish-text');
-        m.style.borderColor='#e57373';setTimeout(()=>m.style.borderColor='',1200);return;
-      }
-      wishesRef.push({name,text,timestamp:Date.now()})
-        .then(()=>{document.getElementById('wish-name').value='';document.getElementById('wish-text').value='';closeWishModal();showToast();})
-        .catch(err=>{console.error(err);alert('Ralat menghantar ucapan. Sila cuba lagi.');});
+      const name=document.getElementById('wish-name').value.trim();const text=document.getElementById('wish-text').value.trim();
+      if(!name||!text){const m=!name?document.getElementById('wish-name'):document.getElementById('wish-text');m.style.borderColor='#e57373';setTimeout(()=>m.style.borderColor='',1200);return;}
+      wishesRef.push({name,text,timestamp:Date.now()}).then(()=>{document.getElementById('wish-name').value='';document.getElementById('wish-text').value='';closeWishModal();showToast();}).catch(err=>{console.error(err);alert('Ralat menghantar ucapan. Sila cuba lagi.');});
     }
-
     function showToast(){const t=document.getElementById('wish-toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
-
     function renderTicker(){
-      const ticker=document.getElementById('wish-ticker');
-      const noMsg=document.getElementById('no-wishes-msg');
-      if(wishes.length===0){
-        if(noMsg)noMsg.style.display='';
-        stopTicker();
-        ticker.querySelectorAll('.wish-card').forEach(c=>c.remove());
-        return;
-      }
+      const ticker=document.getElementById('wish-ticker');const noMsg=document.getElementById('no-wishes-msg');
+      if(wishes.length===0){if(noMsg)noMsg.style.display='';stopTicker();ticker.querySelectorAll('.wish-card').forEach(c=>c.remove());return;}
       if(noMsg)noMsg.style.display='none';
-      ticker.querySelectorAll('.wish-card').forEach(c=>c.remove());
-      tickerIndex=0;
-      wishes.forEach((w,i)=>{
-        const card=document.createElement('div');
-        card.className='wish-card'+(i===0?' visible':'');
-        card.innerHTML='<p class="font-caveat" style="color:var(--ivory);font-size:24px;line-height:1.4;">"'+w.text+'"</p><p class="mt-2 font-caveat" style="color:var(--gold);font-size:18px;">— '+w.name+'</p>';
-        ticker.appendChild(card);
-      });
-      stopTicker();
-      if(wishes.length>1)startTicker();
+      ticker.querySelectorAll('.wish-card').forEach(c=>c.remove());tickerIndex=0;
+      wishes.forEach((w,i)=>{const card=document.createElement('div');card.className='wish-card'+(i===0?' visible':'');card.innerHTML='<p class="font-caveat" style="color:var(--ivory);font-size:24px;line-height:1.4;">"'+w.text+'"</p><p class="mt-2 font-caveat" style="color:var(--gold);font-size:18px;">— '+w.name+'</p>';ticker.appendChild(card);});
+      stopTicker();if(wishes.length>1)startTicker();
     }
-
     function stopTicker(){if(tickerTimer){clearInterval(tickerTimer);tickerTimer=null;}}
     function startTicker(){
       tickerTimer=setInterval(()=>{
-        const cards=document.querySelectorAll('#wish-ticker .wish-card');
-        if(!cards.length)return;
-        cards[tickerIndex].classList.remove('visible');
-        const next=(tickerIndex+1)%cards.length;
+        const cards=document.querySelectorAll('#wish-ticker .wish-card');if(!cards.length)return;
+        cards[tickerIndex].classList.remove('visible');const next=(tickerIndex+1)%cards.length;
         setTimeout(()=>{tickerIndex=next;cards[tickerIndex].classList.add('visible');},800);
       },3800);
     }
