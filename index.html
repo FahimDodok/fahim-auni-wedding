@@ -1107,9 +1107,67 @@
     /* ── Firebase ── */
     const firebaseConfig={apiKey:"AIzaSyBKqiNmEAuxyYWtyqITZ0NSrEnzJIuO1_o",authDomain:"fahim-auni-wedding.firebaseapp.com",projectId:"fahim-auni-wedding",storageBucket:"fahim-auni-wedding.firebasestorage.app",messagingSenderId:"695568427433",appId:"1:695568427433:web:205578eccac0f5b2be3cb8",databaseURL:"https://fahim-auni-wedding-default-rtdb.asia-southeast1.firebasedatabase.app"};
     firebase.initializeApp(firebaseConfig);
-    const db=firebase.database();const wishesRef=db.ref('wishes');
-    let wishes=[],tickerIndex=0,tickerTimer=null;
-    wishesRef.on('value',snapshot=>{wishes=[];snapshot.forEach(child=>wishes.push(child.val()));tickerIndex=0;renderTicker();});
+    const db = firebase.database();
+    const wishesRef = db.ref('wishes');
+
+    // Keep wishes keyed by Firebase ID so new submissions never reset the active cycle.
+    const wishesByKey = new Map();
+    let wishes = [];
+    let currentCycleKeys = [];
+    let tickerIndex = 0;
+    let tickerTimer = null;
+    let tickerTransitionTimer = null;
+    let tickerReady = false;
+
+    function wishFromSnapshot(snapshot) {
+      const value = snapshot.val() || {};
+      return {
+        key: snapshot.key,
+        name: String(value.name || ''),
+        text: String(value.text || ''),
+        timestamp: Number(value.timestamp) || 0
+      };
+    }
+
+    function getLatestWishes() {
+      return Array.from(wishesByKey.values()).sort((a, b) => {
+        const timeDifference = b.timestamp - a.timestamp;
+        if (timeDifference !== 0) return timeDifference;
+        return String(b.key).localeCompare(String(a.key));
+      });
+    }
+
+    function addWishFromSnapshot(snapshot) {
+      if (!snapshot.key || wishesByKey.has(snapshot.key)) return false;
+      wishesByKey.set(snapshot.key, wishFromSnapshot(snapshot));
+      return true;
+    }
+
+    // Subscribe first so submissions arriving during the initial read aren't missed.
+    wishesRef.on('child_added', snapshot => {
+      const wasAdded = addWishFromSnapshot(snapshot);
+      if (!wasAdded || !tickerReady) return;
+
+      // Do not rebuild the active queue while someone is reading it.
+      // New records will be included, newest-first, at the next cycle boundary.
+      if (currentCycleKeys.length === 0) {
+        wishes = getLatestWishes();
+        renderTicker();
+      } else if (!tickerTimer && wishesByKey.size > 1) {
+        // Handles the case where the page started with one wish and a second arrives.
+        startTicker();
+      }
+    });
+
+    // Load all existing wishes once, then let child_added handle new ones in real time.
+    wishesRef.once('value').then(snapshot => {
+      snapshot.forEach(child => addWishFromSnapshot(child));
+      tickerReady = true;
+      wishes = getLatestWishes();
+      renderTicker();
+    }).catch(error => {
+      console.error('Unable to load wedding wishes from Firebase:', error);
+    });
 
     function openWishModal(){document.getElementById('wish-overlay').classList.add('open');document.body.style.overflow='hidden';}
     function closeWishModal(){document.getElementById('wish-overlay').classList.remove('open');document.body.style.overflow='';}
@@ -1120,21 +1178,74 @@
       wishesRef.push({name,text,timestamp:Date.now()}).then(()=>{document.getElementById('wish-name').value='';document.getElementById('wish-text').value='';closeWishModal();showToast();}).catch(err=>{console.error(err);alert('Ralat menghantar ucapan. Sila cuba lagi.');});
     }
     function showToast(){const t=document.getElementById('wish-toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
     function renderTicker(){
-      const ticker=document.getElementById('wish-ticker');const noMsg=document.getElementById('no-wishes-msg');
-      if(wishes.length===0){if(noMsg)noMsg.style.display='';stopTicker();ticker.querySelectorAll('.wish-card').forEach(c=>c.remove());return;}
-      if(noMsg)noMsg.style.display='none';
-      ticker.querySelectorAll('.wish-card').forEach(c=>c.remove());tickerIndex=0;
-      wishes.forEach((w,i)=>{const card=document.createElement('div');card.className='wish-card'+(i===0?' visible':'');card.innerHTML='<p class="font-caveat" style="color:var(--ivory);font-size:24px;line-height:1.4;">"'+w.text+'"</p><p class="mt-2 font-caveat" style="color:var(--gold);font-size:18px;">— '+w.name+'</p>';ticker.appendChild(card);});
-      stopTicker();if(wishes.length>1)startTicker();
+      const ticker=document.getElementById('wish-ticker');
+      const noMsg=document.getElementById('no-wishes-msg');
+      stopTicker();
+      ticker.querySelectorAll('.wish-card').forEach(card=>card.remove());
+      wishes = getLatestWishes();
+      currentCycleKeys = wishes.map(wish => wish.key);
+      tickerIndex = 0;
+
+      if(wishes.length===0){
+        if(noMsg) noMsg.style.display='';
+        return;
+      }
+      if(noMsg) noMsg.style.display='none';
+
+      wishes.forEach((wish,index)=>{
+        const card=document.createElement('div');
+        card.className='wish-card'+(index===0?' visible':'');
+        card.dataset.wishKey=wish.key;
+
+        const quote=document.createElement('p');
+        quote.className='font-caveat';
+        quote.style.cssText='color:var(--ivory);font-size:24px;line-height:1.4;';
+        quote.textContent='"'+wish.text+'"';
+
+        const author=document.createElement('p');
+        author.className='mt-2 font-caveat';
+        author.style.cssText='color:var(--gold);font-size:18px;';
+        author.textContent='— '+wish.name;
+
+        card.appendChild(quote);
+        card.appendChild(author);
+        ticker.appendChild(card);
+      });
+
+      if(wishesByKey.size>1) startTicker();
     }
-    function stopTicker(){if(tickerTimer){clearInterval(tickerTimer);tickerTimer=null;}}
+
+    function stopTicker(){
+      if(tickerTimer!==null){clearInterval(tickerTimer);tickerTimer=null;}
+      if(tickerTransitionTimer!==null){clearTimeout(tickerTransitionTimer);tickerTransitionTimer=null;}
+    }
+
     function startTicker(){
-      tickerTimer=setInterval(()=>{
-        const cards=document.querySelectorAll('#wish-ticker .wish-card');if(!cards.length)return;
-        cards[tickerIndex].classList.remove('visible');const next=(tickerIndex+1)%cards.length;
-        setTimeout(()=>{tickerIndex=next;cards[tickerIndex].classList.add('visible');},800);
-      },3800);
+      if(tickerTimer!==null || wishesByKey.size<2) return;
+      tickerTimer=setInterval(advanceTicker,3800);
+    }
+
+    function advanceTicker(){
+      const cards=Array.from(document.querySelectorAll('#wish-ticker .wish-card'));
+      if(!cards.length) return;
+
+      cards[tickerIndex]?.classList.remove('visible');
+      if(tickerTransitionTimer!==null) clearTimeout(tickerTransitionTimer);
+      tickerTransitionTimer=setTimeout(()=>{
+        tickerTransitionTimer=null;
+        const nextIndex=tickerIndex+1;
+
+        if(nextIndex<currentCycleKeys.length && cards[nextIndex]){
+          tickerIndex=nextIndex;
+          cards[tickerIndex].classList.add('visible');
+        } else {
+          // The current cycle is complete: restart at the newest wish, including new arrivals.
+          wishes=getLatestWishes();
+          renderTicker();
+        }
+      },800);
     }
 
     const observer=new IntersectionObserver(entries=>{
