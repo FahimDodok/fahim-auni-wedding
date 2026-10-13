@@ -109,7 +109,7 @@
         #wish-toast .toast-msg{font-size:13px;font-weight:500;color:#fff;line-height:1.3;margin-top:1px}
 
         /* Wish ticker */
-        #wish-ticker{position:relative;min-height:100px;display:flex;align-items:center;justify-content:center}
+        #wish-ticker{position:relative;min-height:100px;display:flex;align-items:center;justify-content:center;touch-action:pan-y}
         .wish-card{position:absolute;width:100%;text-align:center;opacity:0;transform:translateY(10px);transition:opacity .8s ease,transform .8s ease;pointer-events:none}
         .wish-card.visible{opacity:1;transform:translateY(0);pointer-events:auto}
 
@@ -1117,7 +1117,13 @@
     let tickerIndex = 0;
     let tickerTimer = null;
     let tickerTransitionTimer = null;
+    let tickerInactivityTimer = null;
+    let manualPauseActive = false;
     let tickerReady = false;
+
+    const TICKER_INTERVAL_MS = 3800;
+    const MANUAL_INACTIVITY_MS = 5000;
+    const TICKER_TRANSITION_MS = 800;
 
     function wishFromSnapshot(snapshot) {
       const value = snapshot.val() || {};
@@ -1196,6 +1202,8 @@
 
       wishes.forEach((wish,index)=>{
         const card=document.createElement('div');
+        // Start hidden; reveal after the browser has painted the initial state so
+        // the first wish and cycle-boundary transition can animate consistently.
         card.className='wish-card';
         card.dataset.wishKey=wish.key;
 
@@ -1213,12 +1221,13 @@
         card.appendChild(author);
         ticker.appendChild(card);
       });
+
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           ticker.querySelector('.wish-card')?.classList.add('visible');
         });
       });
-      
+
       if(wishesByKey.size>1) startTicker();
     }
 
@@ -1228,30 +1237,110 @@
     }
 
     function startTicker(){
-      if(tickerTimer!==null || wishesByKey.size<2) return;
-      tickerTimer=setInterval(advanceTicker,3800);
+      if(tickerTimer!==null || wishesByKey.size<2 || manualPauseActive) return;
+      tickerTimer=setInterval(advanceTicker,TICKER_INTERVAL_MS);
+    }
+
+    // Move to one card using the same fade transition for autoplay and manual swipes.
+    function transitionToIndex(nextIndex){
+      const ticker=document.getElementById('wish-ticker');
+      const cards=Array.from(ticker.querySelectorAll('.wish-card'));
+      if(!cards.length) return;
+
+      if(tickerTransitionTimer!==null){
+        clearTimeout(tickerTransitionTimer);
+        tickerTransitionTimer=null;
+      }
+      cards.forEach(card=>card.classList.remove('visible'));
+      tickerIndex=nextIndex;
+
+      tickerTransitionTimer=setTimeout(()=>{
+        tickerTransitionTimer=null;
+        const currentCards=Array.from(ticker.querySelectorAll('.wish-card'));
+        currentCards[tickerIndex]?.classList.add('visible');
+      },TICKER_TRANSITION_MS);
     }
 
     function advanceTicker(){
+      if(manualPauseActive) return;
       const cards=Array.from(document.querySelectorAll('#wish-ticker .wish-card'));
       if(!cards.length) return;
 
+      const nextIndex=tickerIndex+1;
+      if(nextIndex<currentCycleKeys.length && cards[nextIndex]){
+        transitionToIndex(nextIndex);
+        return;
+      }
+
+      // The current cycle is complete: fade out, then restart at the newest wish,
+      // including any wishes submitted while this cycle was being read.
       cards[tickerIndex]?.classList.remove('visible');
       if(tickerTransitionTimer!==null) clearTimeout(tickerTransitionTimer);
       tickerTransitionTimer=setTimeout(()=>{
         tickerTransitionTimer=null;
-        const nextIndex=tickerIndex+1;
+        wishes=getLatestWishes();
+        renderTicker();
+      },TICKER_TRANSITION_MS);
+    }
 
-        if(nextIndex<currentCycleKeys.length && cards[nextIndex]){
-          tickerIndex=nextIndex;
-          cards[tickerIndex].classList.add('visible');
-        } else {
-          // The current cycle is complete: restart at the newest wish, including new arrivals.
+    function handleWishSwipe(direction){
+      if(currentCycleKeys.length<2) return;
+
+      // Any gesture pauses autoplay. Repeated swipes restart this 5-second idle window.
+      manualPauseActive=true;
+      stopTicker();
+      if(tickerInactivityTimer!==null){
+        clearTimeout(tickerInactivityTimer);
+        tickerInactivityTimer=null;
+      }
+
+      const cards=Array.from(document.querySelectorAll('#wish-ticker .wish-card'));
+      if(!cards.length) return;
+
+      const nextIndex=tickerIndex+direction;
+      if(direction>0 && nextIndex>=currentCycleKeys.length){
+        // Swiping past the last wish completes this cycle and returns to the newest list.
+        cards[tickerIndex]?.classList.remove('visible');
+        tickerTransitionTimer=setTimeout(()=>{
+          tickerTransitionTimer=null;
           wishes=getLatestWishes();
           renderTicker();
-        }
-      },800);
+        },TICKER_TRANSITION_MS);
+      } else {
+        // Wrap backwards from the newest wish to the oldest currently queued wish.
+        const wrappedIndex=(nextIndex+currentCycleKeys.length)%currentCycleKeys.length;
+        transitionToIndex(wrappedIndex);
+      }
+
+      tickerInactivityTimer=setTimeout(()=>{
+        tickerInactivityTimer=null;
+        manualPauseActive=false;
+        // After five idle seconds, advance once; normal 3.8-second autoplay then resumes.
+        advanceTicker();
+        startTicker();
+      },MANUAL_INACTIVITY_MS);
     }
+
+    // Hidden gesture: swipe left for next, swipe right for previous. No extra UI controls.
+    (function initWishSwipe(){
+      const ticker=document.getElementById('wish-ticker');
+      let pointerStart=null;
+      const SWIPE_THRESHOLD=45;
+      ticker.addEventListener('pointerdown',event=>{
+        if(event.pointerType==='mouse' && event.button!==0) return;
+        pointerStart={x:event.clientX,y:event.clientY,pointerId:event.pointerId};
+      });
+      ticker.addEventListener('pointerup',event=>{
+        if(!pointerStart || pointerStart.pointerId!==event.pointerId) return;
+        const dx=event.clientX-pointerStart.x;
+        const dy=event.clientY-pointerStart.y;
+        pointerStart=null;
+        // Ignore taps and vertical page scrolling; only intentional horizontal swipes count.
+        if(Math.abs(dx)<SWIPE_THRESHOLD || Math.abs(dx)<Math.abs(dy)*1.2) return;
+        handleWishSwipe(dx<0 ? 1 : -1);
+      });
+      ticker.addEventListener('pointercancel',()=>{pointerStart=null;});
+    })();
 
     const observer=new IntersectionObserver(entries=>{
       entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');else if(e.boundingClientRect.top>0)e.target.classList.remove('visible');});
