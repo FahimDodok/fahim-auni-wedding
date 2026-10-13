@@ -1213,7 +1213,12 @@
         card.appendChild(author);
         ticker.appendChild(card);
       });
-
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          ticker.querySelector('.wish-card')?.classList.add('visible');
+        });
+      });
+      
       if(wishesByKey.size>1) startTicker();
     }
 
