@@ -943,12 +943,13 @@
       },25000);
     }
 
-    // The Apps Script response posts a small result message from the hidden iframe.
+    // Apps Script may deliver its HTML response through a nested Google iframe.
+    // Do not require event.source to equal rsvpFrame.contentWindow; that can
+    // reject a genuine response. Match the one-time submission ID instead.
     window.addEventListener('message',event=>{
-      if(!rsvpFrame || event.source!==rsvpFrame.contentWindow) return;
       const result=event.data;
       if(!result || result.type!=='FAHIM_AUNI_RSVP_RESULT') return;
-      if(rsvpPendingSubmissionId && result.submissionId && result.submissionId!==rsvpPendingSubmissionId) return;
+      if(!rsvpPendingSubmissionId || result.submissionId!==rsvpPendingSubmissionId) return;
 
       if(rsvpResponseTimeout!==null){clearTimeout(rsvpResponseTimeout);rsvpResponseTimeout=null;}
       setRsvpSubmitting(false);
