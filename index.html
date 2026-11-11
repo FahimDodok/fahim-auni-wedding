@@ -85,8 +85,33 @@
         #music-fab.playing .fab-ring{opacity:1;animation:spin-ring 2.5s linear infinite}
         #music-fab.playing{box-shadow:0 4px 24px rgba(0,0,0,.35),0 0 16px rgba(201,168,76,.25)}
 
-        /* RSVP lock */
-        #btn-rsvp,#btn-rsvp:link,#btn-rsvp:visited,#btn-rsvp:active,#btn-rsvp:hover{color:rgb(201,168,76)!important;background:rgb(15,27,61)!important;text-decoration:none;-webkit-tap-highlight-color:transparent;outline:none}
+        /* RSVP button and custom modal */
+        #btn-rsvp{color:rgb(201,168,76)!important;background:rgb(15,27,61)!important;text-decoration:none;-webkit-tap-highlight-color:transparent;outline:none;appearance:none;-webkit-appearance:none;}
+        #rsvp-overlay{position:fixed;inset:0;z-index:21000;background:rgba(10,16,35,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s ease;}
+        #rsvp-overlay.open{opacity:1;pointer-events:all;}
+        #rsvp-sheet{width:100%;max-width:440px;max-height:calc(100dvh - 40px);overflow-y:auto;overscroll-behavior:contain;background:var(--ivory);border-radius:20px;padding:26px 23px;box-shadow:0 18px 55px rgba(0,0,0,.28);transform:translateY(22px) scale(.98);transition:transform .35s cubic-bezier(.32,.72,0,1);}
+        #rsvp-overlay.open #rsvp-sheet{transform:translateY(0) scale(1);}
+        .rsvp-field{border:0;padding:0;margin:0 0 18px;min-width:0;}
+        .rsvp-label{display:block;margin-bottom:9px;color:var(--navy);font-size:13px;font-weight:600;letter-spacing:.01em;}
+        .rsvp-label span:not(.rsvp-optional){color:#b84b45;}
+        .rsvp-optional,.rsvp-hint{color:rgba(15,27,61,.5);font-weight:400;font-size:11px;}
+        #rsvp-name,#rsvp-remarks{display:block;width:100%;border:1px solid rgba(201,168,76,.45);border-radius:10px;padding:12px 13px;font-family:'Poppins',sans-serif;font-size:13px;background:#fff;color:var(--navy);outline:none;resize:vertical;transition:border-color .2s,box-shadow .2s;}
+        #rsvp-name:focus,#rsvp-remarks:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.12);}
+        .rsvp-choice{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-top:7px;border:1px solid rgba(201,168,76,.25);border-radius:10px;background:rgba(255,255,255,.72);color:var(--navy);font-size:12px;line-height:1.45;cursor:pointer;transition:border-color .18s,background .18s;}
+        .rsvp-choice:has(input:checked),.rsvp-count-choice:has(input:checked){border-color:var(--gold);background:rgba(201,168,76,.10);}
+        .rsvp-choice input,.rsvp-count-choice input{accent-color:var(--gold);width:16px;height:16px;flex-shrink:0;margin:0;}
+        .rsvp-hint{margin:-5px 0 8px;}
+        .rsvp-headcount-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
+        .rsvp-count-choice{display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;border:1px solid rgba(201,168,76,.3);border-radius:10px;background:rgba(255,255,255,.72);color:var(--navy);font-size:13px;cursor:pointer;}
+        .rsvp-submit-btn{display:block;width:100%;margin-top:8px;padding:13px 16px;border:1px solid rgba(201,168,76,.55);border-radius:11px;background:var(--navy);color:var(--gold);font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:opacity .2s,transform .18s;}
+        .rsvp-submit-btn:disabled{opacity:.55;cursor:wait;}
+        .rsvp-cancel-btn{display:block;width:100%;padding:11px 16px;border:0;background:transparent;color:rgba(15,27,61,.55);font-family:'Poppins',sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
+        .rsvp-feedback{margin:0 0 12px;padding:10px 12px;border-radius:9px;background:rgba(184,75,69,.08);color:#9b3833;font-size:12px;line-height:1.5;}
+        .rsvp-feedback.info{background:rgba(201,168,76,.12);color:#725a1c;}
+        .rsvp-success{text-align:center;padding:18px 4px 4px;}
+        .rsvp-success-icon{width:48px;height:48px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(64,130,91,.12);color:#397b55;font-size:25px;font-weight:600;}
+        .rsvp-honeypot{position:absolute!important;left:-10000px!important;top:auto!important;width:1px!important;height:1px!important;overflow:hidden!important;}
+        @media(max-width:380px){#rsvp-sheet{padding:23px 18px}.rsvp-choice{font-size:11px;padding:9px 10px;}}
 
         /* Hantar Ucapan lock */
         #btn-hantar{-webkit-tap-highlight-color:transparent;outline:none;}
@@ -438,9 +463,9 @@
       <div class="max-w-lg mx-auto relative z-10">
         <p class="text-sm uppercase tracking-[0.3em] mb-6" style="color:rgb(201,168,76);font-size:14px;">Pengesahan Kehadiran</p>
         <p class="leading-relaxed mb-8" style="color:rgb(15,27,61);font-size:16px;">Kehadiran dan doa restu Dato'/Datin/Tuan/Puan/Encik/Cik amat kami hargai. Sila sahkan kehadiran anda dengan menekan butang di bawah.</p>
-        <a href="https://forms.gle/hVSucneWxcG6Gh9E6" target="_blank" rel="noopener noreferrer" id="btn-rsvp"
+        <button type="button" id="btn-rsvp" onclick="openRsvpModal()"
            class="inline-block px-10 py-4 text-sm uppercase tracking-[0.2em] font-semibold rounded-lg pulse-glow"
-           style="background:rgb(15,27,61);color:rgb(201,168,76);border:1px solid var(--gold);-webkit-tap-highlight-color:transparent;text-decoration:none;">RSVP Sekarang</a>
+           style="background:rgb(15,27,61);color:rgb(201,168,76);border:1px solid var(--gold);-webkit-tap-highlight-color:transparent;cursor:pointer;">RSVP Sekarang</button>
       </div>
     </section>
 
@@ -466,6 +491,75 @@
       <p style="color:rgb(201,168,76);opacity:.6;font-size:14px;">Fahim &amp; Auni — 30.01.2027</p>
     </footer>
   </div>
+
+  <!-- Custom RSVP Modal -->
+  <div id="rsvp-overlay" onclick="handleRsvpOverlayClick(event)" aria-hidden="true" inert>
+    <div id="rsvp-sheet" role="dialog" aria-modal="true" aria-labelledby="rsvp-title">
+      <div class="text-center mb-5">
+        <p id="rsvp-title" class="font-display font-bold" style="color:var(--navy);font-size:25px;">Pengesahan Kehadiran</p>
+        <p class="mt-2" style="color:rgba(15,27,61,.65);font-size:13px;line-height:1.6;">Terima kasih atas maklum balas anda. Sila lengkapkan maklumat di bawah.</p>
+        <div class="gold-divider w-20 mx-auto mt-4"></div>
+      </div>
+
+      <form id="rsvp-form" onsubmit="submitRsvp(event)" novalidate>
+        <div class="rsvp-field">
+          <label class="rsvp-label" for="rsvp-name">Nama <span>*</span></label>
+          <input id="rsvp-name" type="text" maxlength="100" autocomplete="name" placeholder="Nama penuh anda" required>
+        </div>
+
+        <fieldset class="rsvp-field">
+          <legend class="rsvp-label">Pihak <span>*</span></legend>
+          <label class="rsvp-choice"><input type="radio" name="rsvp-party" value="Pihak Pengantin Lelaki (Fahim)" required><span>Pihak Pengantin Lelaki (Fahim)</span></label>
+          <label class="rsvp-choice"><input type="radio" name="rsvp-party" value="Pihak Pengantin Perempuan (Auni)" required><span>Pihak Pengantin Perempuan (Auni)</span></label>
+        </fieldset>
+
+        <fieldset class="rsvp-field">
+          <legend class="rsvp-label">Kehadiran <span>*</span></legend>
+          <label class="rsvp-choice"><input type="radio" name="rsvp-attendance" value="Hadir" required><span>Hadir</span></label>
+          <label class="rsvp-choice"><input type="radio" name="rsvp-attendance" value="Tidak Hadir" required><span>Tidak Hadir</span></label>
+        </fieldset>
+
+        <fieldset class="rsvp-field" id="rsvp-headcount-section" hidden>
+          <legend class="rsvp-label">Bilangan yang hadir <span>*</span></legend>
+          <div class="rsvp-headcount-grid">
+            <label class="rsvp-count-choice"><input type="radio" name="rsvp-headcount" value="1"><span>1</span></label>
+            <label class="rsvp-count-choice"><input type="radio" name="rsvp-headcount" value="2"><span>2</span></label>
+            <label class="rsvp-count-choice"><input type="radio" name="rsvp-headcount" value="3"><span>3</span></label>
+            <label class="rsvp-count-choice"><input type="radio" name="rsvp-headcount" value="4+"><span>4+</span></label>
+          </div>
+        </fieldset>
+
+        <div class="rsvp-field">
+          <label class="rsvp-label" for="rsvp-remarks">Remarks <span class="rsvp-optional">(Optional)</span></label>
+          <textarea id="rsvp-remarks" rows="3" maxlength="500" placeholder="Sebarang pesanan atau maklumat tambahan..."></textarea>
+        </div>
+
+        <p id="rsvp-feedback" class="rsvp-feedback" role="status" aria-live="polite" hidden></p>
+
+        <button id="rsvp-submit-btn" type="submit" class="rsvp-submit-btn">Hantar Pengesahan</button>
+        <button type="button" onclick="closeRsvpModal()" class="rsvp-cancel-btn">Batal</button>
+      </form>
+
+      <div id="rsvp-success" class="rsvp-success" hidden>
+        <div class="rsvp-success-icon">✓</div>
+        <p class="font-display font-bold" style="color:var(--navy);font-size:24px;">Terima kasih!</p>
+        <p class="mt-2" style="color:rgba(15,27,61,.7);font-size:14px;line-height:1.65;">Pengesahan kehadiran anda telah diterima. Kami amat menghargai maklum balas anda.</p>
+        <button type="button" onclick="closeRsvpModal()" class="rsvp-submit-btn mt-5">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden transport: submits to Apps Script and receives its result through postMessage. -->
+  <form id="rsvp-transport-form" method="POST" target="rsvp-submit-frame" accept-charset="UTF-8" style="display:none;">
+    <input type="hidden" name="name" id="rsvp-post-name">
+    <input type="hidden" name="party" id="rsvp-post-party">
+    <input type="hidden" name="attendance" id="rsvp-post-attendance">
+    <input type="hidden" name="headcount" id="rsvp-post-headcount">
+    <input type="hidden" name="remarks" id="rsvp-post-remarks">
+    <input type="hidden" name="submissionId" id="rsvp-post-submission-id">
+    <div class="rsvp-honeypot" aria-hidden="true"><label>Leave this field empty<input type="text" name="website" value="" tabindex="-1" autocomplete="off"></label></div>
+  </form>
+  <iframe id="rsvp-submit-frame" name="rsvp-submit-frame" title="RSVP submission result" style="display:none;width:0;height:0;border:0;"></iframe>
 
   <!-- Wish Modal -->
   <div id="wish-overlay" onclick="handleOverlayClick(event)">
@@ -726,6 +820,156 @@
       rsvpEl.addEventListener('touchstart',rP,{passive:true});rsvpEl.addEventListener('touchend',rR,{passive:true});rsvpEl.addEventListener('touchcancel',rR,{passive:true});
       rsvpEl.addEventListener('mousedown',rP);rsvpEl.addEventListener('mouseup',rR);rsvpEl.addEventListener('mouseleave',rR);
     }
+    /* ── Custom RSVP -> existing Google Form via Apps Script ── */
+    const RSVP_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbydm2_euao4ZEwlvp7baJ7mGZvNbU6J7jVuzftgQgfVuP_VVPGgb1_zox1clLNSuorH/exec';
+    const rsvpOverlay = document.getElementById('rsvp-overlay');
+    const rsvpForm = document.getElementById('rsvp-form');
+    const rsvpTransportForm = document.getElementById('rsvp-transport-form');
+    const rsvpFrame = document.getElementById('rsvp-submit-frame');
+    const rsvpHeadcountSection = document.getElementById('rsvp-headcount-section');
+    const rsvpFeedback = document.getElementById('rsvp-feedback');
+    const rsvpSubmitButton = document.getElementById('rsvp-submit-btn');
+    const rsvpSuccess = document.getElementById('rsvp-success');
+    let rsvpSubmitting = false;
+    let rsvpPendingSubmissionId = null;
+    let rsvpResponseTimeout = null;
+
+    function openRsvpModal(){
+      rsvpOverlay.classList.add('open');
+      rsvpOverlay.setAttribute('aria-hidden','false');
+      rsvpOverlay.inert=false;
+      document.body.style.overflow='hidden';
+      setTimeout(()=>document.getElementById('rsvp-name').focus({preventScroll:true}),180);
+    }
+
+    function closeRsvpModal(){
+      if(rsvpSubmitting) return;
+      if(rsvpResponseTimeout!==null){clearTimeout(rsvpResponseTimeout);rsvpResponseTimeout=null;}
+      rsvpOverlay.classList.remove('open');
+      rsvpOverlay.setAttribute('aria-hidden','true');
+      rsvpOverlay.inert=true;
+      document.body.style.overflow='';
+
+      // If submission status is uncertain after a timeout, preserve the values
+      // and submission ID so retrying cannot create a second response.
+      if(!rsvpPendingSubmissionId || !rsvpSuccess.hidden){
+        rsvpForm.reset();
+        rsvpForm.hidden=false;
+        rsvpSuccess.hidden=true;
+        rsvpHeadcountSection.hidden=true;
+        rsvpFeedback.hidden=true;
+        rsvpFeedback.textContent='';
+        rsvpPendingSubmissionId=null;
+      }
+    }
+
+    function handleRsvpOverlayClick(event){
+      if(event.target===rsvpOverlay && !rsvpSubmitting) closeRsvpModal();
+    }
+
+    function updateRsvpHeadcount(){
+      const selected = rsvpForm.querySelector('input[name="rsvp-attendance"]:checked');
+      const attending = !!selected && selected.value==='Hadir';
+      rsvpHeadcountSection.hidden=!attending;
+      rsvpHeadcountSection.querySelectorAll('input[name="rsvp-headcount"]').forEach(input=>{
+        input.required=attending;
+        if(!attending) input.checked=false;
+      });
+    }
+
+    rsvpForm.querySelectorAll('input[name="rsvp-attendance"]').forEach(input=>{
+      input.addEventListener('change',updateRsvpHeadcount);
+    });
+
+    function makeRsvpSubmissionId(){
+      if(window.crypto && typeof window.crypto.randomUUID==='function') return 'rsvp_'+window.crypto.randomUUID();
+      return 'rsvp_'+Date.now()+'_'+Math.random().toString(36).slice(2,12);
+    }
+
+    function setRsvpFeedback(message,kind){
+      rsvpFeedback.textContent=message;
+      rsvpFeedback.className='rsvp-feedback'+(kind==='info'?' info':'');
+      rsvpFeedback.hidden=false;
+    }
+
+    function setRsvpSubmitting(isSubmitting){
+      rsvpSubmitting=isSubmitting;
+      rsvpSubmitButton.disabled=isSubmitting;
+      rsvpSubmitButton.textContent=isSubmitting?'Menghantar...':'Hantar Pengesahan';
+    }
+
+    function submitRsvp(event){
+      event.preventDefault();
+      if(rsvpSubmitting) return;
+
+      const name=document.getElementById('rsvp-name').value.trim();
+      const party=rsvpForm.querySelector('input[name="rsvp-party"]:checked')?.value || '';
+      const attendance=rsvpForm.querySelector('input[name="rsvp-attendance"]:checked')?.value || '';
+      const selectedHeadcount=rsvpForm.querySelector('input[name="rsvp-headcount"]:checked')?.value || '';
+      const remarks=document.getElementById('rsvp-remarks').value.trim();
+
+      if(!name){document.getElementById('rsvp-name').reportValidity();return;}
+      if(!party){setRsvpFeedback('Sila pilih pihak pengantin.');return;}
+      if(!attendance){setRsvpFeedback('Sila pilih status kehadiran.');return;}
+      if(attendance==='Hadir' && !selectedHeadcount){setRsvpFeedback('Sila pilih bilangan yang hadir.');return;}
+
+      const headcount=attendance==='Hadir'?selectedHeadcount:'0 — Tidak Hadir';
+      if(!rsvpPendingSubmissionId) rsvpPendingSubmissionId=makeRsvpSubmissionId();
+
+      document.getElementById('rsvp-post-name').value=name;
+      document.getElementById('rsvp-post-party').value=party;
+      document.getElementById('rsvp-post-attendance').value=attendance;
+      document.getElementById('rsvp-post-headcount').value=headcount;
+      document.getElementById('rsvp-post-remarks').value=remarks;
+      document.getElementById('rsvp-post-submission-id').value=rsvpPendingSubmissionId;
+      rsvpTransportForm.action=RSVP_WEB_APP_URL;
+
+      setRsvpSubmitting(true);
+      setRsvpFeedback('Sedang menghantar pengesahan anda. Sila tunggu sebentar.','info');
+      try{
+        rsvpTransportForm.submit();
+      }catch(error){
+        setRsvpSubmitting(false);
+        setRsvpFeedback('Tidak dapat menghantar buat masa ini. Sila cuba sekali lagi.');
+        console.error('RSVP submission error:',error);
+        return;
+      }
+
+      if(rsvpResponseTimeout!==null) clearTimeout(rsvpResponseTimeout);
+      rsvpResponseTimeout=setTimeout(()=>{
+        rsvpResponseTimeout=null;
+        setRsvpSubmitting(false);
+        setRsvpFeedback('Kami belum menerima pengesahan daripada server. Untuk mengelakkan penghantaran berganda, sila cuba semula menggunakan butang yang sama.');
+      },25000);
+    }
+
+    // The Apps Script response posts a small result message from the hidden iframe.
+    window.addEventListener('message',event=>{
+      if(!rsvpFrame || event.source!==rsvpFrame.contentWindow) return;
+      const result=event.data;
+      if(!result || result.type!=='FAHIM_AUNI_RSVP_RESULT') return;
+      if(rsvpPendingSubmissionId && result.submissionId && result.submissionId!==rsvpPendingSubmissionId) return;
+
+      if(rsvpResponseTimeout!==null){clearTimeout(rsvpResponseTimeout);rsvpResponseTimeout=null;}
+      setRsvpSubmitting(false);
+
+      if(result.ok){
+        rsvpPendingSubmissionId=null;
+        rsvpForm.hidden=true;
+        rsvpFeedback.hidden=true;
+        rsvpSuccess.hidden=false;
+      }else{
+        setRsvpFeedback(result.message || 'Pengesahan tidak berjaya dihantar. Sila cuba lagi.');
+      }
+    });
+
+    // Close the RSVP modal with Escape, unless a submission is still in progress.
+    document.addEventListener('keydown',event=>{
+      if(event.key==='Escape' && rsvpOverlay.classList.contains('open') && !rsvpSubmitting){
+        closeRsvpModal();
+      }
+    });
+
     attachPressHold('btn-wish','rgba(201,168,76,.08)');
 
     const hantarEl=document.getElementById('btn-hantar');
